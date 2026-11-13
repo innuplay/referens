@@ -59,12 +59,40 @@
       flex-shrink: 0;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       position: relative;
       padding: 2px 0 4px;
     }
 
+    .header-left-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sync-btn {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .sync-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
     .header-center-pill {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -76,11 +104,10 @@
       padding: 6px 22px;
       border-radius: 999px;
       letter-spacing: 0.02em;
+      white-space: nowrap;
     }
 
     .header-hint {
-      position: absolute;
-      right: 0;
       font-size: 0.78rem;
       color: var(--text-muted);
       background: rgba(255, 255, 255, 0.04);
@@ -735,11 +762,22 @@
 <body>
 
   <div class="app-wrapper">
-    <!-- Верхняя шапка: Заголовок по центру -->
+    <!-- Верхняя шапка: Заголовок по центру, слева кнопки синхронизации -->
     <header>
+      <div class="header-left-actions">
+        <button class="sync-btn" onclick="exportData()" title="Скачать резервную копию всех фото для переноса">
+          Экспорт фото
+        </button>
+        <button class="sync-btn" onclick="document.getElementById('importInput').click()" title="Загрузить сохраненные фото">
+          Импорт фото
+        </button>
+        <input type="file" id="importInput" accept=".json" style="display:none;" onchange="importData(event)">
+      </div>
+
       <div class="header-center-pill">создать персонажа</div>
+
       <div class="header-hint">
-        Вставить картинку: <kbd>Ctrl + V</kbd> в выбранную вкладку
+        Вставить: <kbd>Ctrl + V</kbd> или кнопка <b>«+ Добавить фото»</b>
       </div>
     </header>
 
@@ -1136,6 +1174,63 @@
       await renderAlbumGrid();
       await renderBoard();
       showToast('Доска очищена');
+    }
+
+    async function exportData() {
+      const tx = db.transaction(STORE_ITEMS, 'readonly');
+      const store = tx.objectStore(STORE_ITEMS);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        const items = req.result || [];
+        if (items.length === 0) {
+          showToast('Пока нет фото для экспорта');
+          return;
+        }
+        const data = {
+          items: items,
+          boardItemIds: boardItemIds,
+          exportedAt: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `referens_backup_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast(`Экспортировано фото: ${items.length}`);
+      };
+      req.onerror = () => showToast('Ошибка при экспорте');
+    }
+
+    async function importData(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data.items || !Array.isArray(data.items)) {
+          showToast('Неверный формат файла');
+          return;
+        }
+        const tx = db.transaction(STORE_ITEMS, 'readwrite');
+        const store = tx.objectStore(STORE_ITEMS);
+        for (const item of data.items) {
+          store.put(item);
+        }
+        tx.oncomplete = async () => {
+          if (Array.isArray(data.boardItemIds)) {
+            boardItemIds = data.boardItemIds;
+            saveBoardToStorage();
+          }
+          await renderTabs();
+          await renderAlbumGrid();
+          await renderBoard();
+          showToast(`Импортировано фото: ${data.items.length}!`);
+        };
+      } catch (err) {
+        showToast('Ошибка при чтении файла');
+      }
+      event.target.value = '';
     }
 
     async function deletePhoto(itemId, event) {

@@ -1524,36 +1524,27 @@
           }
         }
 
-        // 2. Если скопирована ссылка на пин или картинку (например, из Pinterest)
+        // 2. Если в буфере ссылка (напрямую на картинку или на пин pin.it / pinterest.com)
         if (navigator.clipboard.readText) {
           const text = (await navigator.clipboard.readText() || '').trim();
-          if (text) {
-            // Если это прямая ссылка на картинку
-            if (/^https?:\/\/.*\.(jpeg|jpg|png|webp|gif)($|\?)/i.test(text) || text.includes('pinimg.com')) {
-              try {
-                showToast('Загружаем картинку по ссылке...');
-                const opt = await optimizeImageUrl(text);
-                await addItemToDB(activeTabId, opt);
-                await renderTabs();
-                await renderAlbumGrid();
-                showToast(`Добавлено во вкладку «${CATEGORIES[activeTabId].title}»!`);
-                return;
-              } catch (err) {
-                console.log('Direct image url fetch failed:', err);
-              }
-            }
-
-            // Если это ссылка на сам пин (pinterest.com/pin/...)
-            if (text.includes('pinterest.com') || text.includes('pin.it')) {
-              showToast('Из приложения Pinterest скопировалась ссылка на страницу, а не само фото. Зажмите саму картинку в браузере или сделайте скриншот');
+          if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
+            try {
+              showToast('Загружаем фото из ссылки...');
+              const opt = await optimizeImageUrl(text);
+              await addItemToDB(activeTabId, opt);
+              await renderTabs();
+              await renderAlbumGrid();
+              showToast(`Добавлено во вкладку «${CATEGORIES[activeTabId].title}»!`);
               return;
+            } catch (err) {
+              console.log('Direct image/pin url fetch failed:', err);
             }
           }
         }
 
-        showToast('В буфере нет картинки. Зажмите саму фотографию и выберите «Скопировать картинку»');
+        showToast('В буфере обмена нет картинки или ссылки');
       } catch (err) {
-        showToast('Разрешите доступ к буферу обмена или нажмите Ctrl+V');
+        showToast('Нажмите «По ссылке» или разрешите доступ к буферу');
       }
     }
 
@@ -1646,7 +1637,23 @@
           await renderTabs();
           await renderAlbumGrid();
           showToast(`Добавлено во вкладку «${CATEGORIES[activeTabId].title}»!`);
-          break;
+          return;
+        }
+      }
+
+      // Если вставляется текст ссылки через Ctrl+V
+      const text = (event.clipboardData || window.clipboardData).getData('text');
+      if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
+        event.preventDefault();
+        showToast('Загружаем фото из ссылки...');
+        try {
+          const opt = await optimizeImageUrl(text);
+          await addItemToDB(activeTabId, opt);
+          await renderTabs();
+          await renderAlbumGrid();
+          showToast(`Добавлено во вкладку «${CATEGORIES[activeTabId].title}»!`);
+        } catch (e) {
+          showToast('Не удалось загрузить по этой ссылке');
         }
       }
     });

@@ -2681,17 +2681,8 @@
       grid.innerHTML = '<div class="search-empty-state"><span>Ищем изображения...</span></div>';
 
       try {
-        // Формируем список запросов и эндпоинтов для надежного параллельного поиска
-        const endpoints = [];
-
-        // 1. Прямой поиск в русской Википедии/Викискладе (отлично работает для запросов на русском)
-        endpoints.push(`https://ru.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
-
-        // 2. Поиск в глобальном Wikimedia Commons по оригинальному запросу
-        endpoints.push(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
-
-        // 3. Если в запросе есть кириллица, переводим на английский для поиска по международным базам
-        let englishQuery = '';
+        // 1. Переводим запрос на английский язык, если введён на русском (международные базы тегированы на английском)
+        let englishQuery = query.trim();
         if (/[а-яё]/i.test(query)) {
           try {
             const trRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(query)}`);
@@ -2699,72 +2690,80 @@
               const trData = await trRes.json();
               if (trData && trData[0] && trData[0][0] && trData[0][0][0]) {
                 englishQuery = trData[0][0][0].trim();
-                endpoints.push(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(englishQuery)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
-                endpoints.push(`https://en.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(englishQuery)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
               }
             }
           } catch (trErr) {
-            console.log('Optional translation skipped:', trErr);
+            console.log('Translation skipped:', trErr);
           }
-        } else {
-          englishQuery = query;
         }
 
-        // 4. Поиск артов и иллюстраций в базе Safebooru (аниме, 2D арт, концепты персонажей)
-        const booruTag = (englishQuery || query).toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').trim();
-        let booruPromise = null;
-        if (booruTag) {
-          booruPromise = fetch(`https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&limit=25&tags=${encodeURIComponent(booruTag)}`)
-            .then(r => r.json())
-            .catch(() => []);
+        const tag = (englishQuery || query).toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').trim();
+
+        // 2. Параллельные запросы к открытым базам артов, концептов и иллюстраций:
+        // - Safebooru (аниме, 2D арт, позы, концепт-арт)
+        // - TBIB (The Big ImageBoard - Danbooru mirror с огромной базой артов высокого разрешения)
+        // - Konachan (высокодетализированные арты, обои и окружение)
+        const fetchPromises = [];
+
+        // Safebooru
+        if (tag) {
+          fetchPromises.push(
+            fetch(`https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&limit=30&tags=${encodeURIComponent(tag)}`)
+              .then(r => r.json())
+              .then(items => {
+                if (!Array.isArray(items)) return [];
+                return items.map(b => ({
+                  thumb: b.preview_url || b.sample_url || b.file_url,
+                  full: b.sample_url || b.file_url || b.preview_url,
+                  title: b.tags || 'арт'
+                }));
+              })
+              .catch(() => [])
+          );
+
+          // TBIB (The Big ImageBoard / Danbooru archive)
+          fetchPromises.push(
+            fetch(`https://tbib.org/index.php?page=dapi&s=post&q=index&json=1&limit=30&tags=${encodeURIComponent(tag)}`)
+              .then(r => r.json())
+              .then(items => {
+                if (!Array.isArray(items)) return [];
+                return items.map(b => {
+                  const dir = b.directory;
+                  const img = b.image;
+                  const thumb = `https://tbib.org/thumbnails/${dir}/thumbnail_${img}`;
+                  const full = `https://tbib.org/images/${dir}/${img}`;
+                  return { thumb, full, title: b.tags || 'арт' };
+                });
+              })
+              .catch(() => [])
+          );
+
+          // Konachan
+          fetchPromises.push(
+            fetch(`https://konachan.net/post.json?tags=${encodeURIComponent(tag)}&limit=30`)
+              .then(r => r.json())
+              .then(items => {
+                if (!Array.isArray(items)) return [];
+                return items.map(b => ({
+                  thumb: b.preview_url || b.sample_url || b.file_url,
+                  full: b.sample_url || b.file_url || b.jpeg_url || b.preview_url,
+                  title: b.tags || 'арт'
+                }));
+              })
+              .catch(() => [])
+          );
         }
 
-        // Запускаем запросы безопасно через allSettled
-        const results = await Promise.allSettled(
-          endpoints.map(u => fetch(u).then(r => r.json()))
-        );
-
+        const responses = await Promise.allSettled(fetchPromises);
         const seenUrls = new Set();
         const validImages = [];
 
-        // Добавляем результаты из Safebooru (персонажи, концепты, 2D)
-        if (booruPromise) {
-          try {
-            const booruItems = await booruPromise;
-            if (Array.isArray(booruItems)) {
-              for (const b of booruItems) {
-                const thumb = b.preview_url || b.sample_url || b.file_url;
-                const full = b.sample_url || b.file_url || thumb;
-                if (thumb && full && !seenUrls.has(full)) {
-                  seenUrls.add(full);
-                  validImages.push({ thumb, full, title: b.tags || 'арт' });
-                }
-              }
-            }
-          } catch (bErr) {
-            console.log('Booru search skipped:', bErr);
-          }
-        }
-
-        for (const res of results) {
-          if (res.status === 'fulfilled' && res.value && res.value.query && res.value.query.pages) {
-            const pages = Object.values(res.value.query.pages);
-            for (const p of pages) {
-              if (p.imageinfo && p.imageinfo[0]) {
-                const info = p.imageinfo[0];
-                const mime = (info.mime || '').toLowerCase();
-                const title = (p.title || '').toLowerCase();
-                if (mime.includes('image') && !mime.includes('svg') && !title.endsWith('.pdf')) {
-                  const thumb = (info.thumburl || info.url || '').replace('^//', 'https://');
-                  const full = (info.url || thumb).replace('^//', 'https://');
-                  const safeThumb = thumb.startsWith('//') ? 'https:' + thumb : thumb;
-                  const safeFull = full.startsWith('//') ? 'https:' + full : full;
-
-                  if (safeThumb && !seenUrls.has(safeFull)) {
-                    seenUrls.add(safeFull);
-                    validImages.push({ thumb: safeThumb, full: safeFull, title: p.title || 'референс' });
-                  }
-                }
+        for (const res of responses) {
+          if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+            for (const img of res.value) {
+              if (img && img.thumb && img.full && !seenUrls.has(img.full)) {
+                seenUrls.add(img.full);
+                validImages.push(img);
               }
             }
           }

@@ -42,6 +42,7 @@
       color: var(--text-main);
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       user-select: none;
+      overscroll-behavior-y: contain;
     }
 
     .app-wrapper {
@@ -86,6 +87,15 @@
     }
     .sync-btn:hover {
       background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+    .sync-btn.reload-btn {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.35);
+      color: #a5b4fc;
+    }
+    .sync-btn.reload-btn:hover {
+      background: rgba(99, 102, 241, 0.3);
       color: #fff;
     }
 
@@ -766,11 +776,15 @@
     <!-- Верхняя шапка: Заголовок по центру, слева кнопки синхронизации -->
     <header>
       <div class="header-left-actions">
+        <button class="sync-btn reload-btn" onclick="window.location.reload(true)" title="Обновить страницу">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          Обновить
+        </button>
         <button class="sync-btn" onclick="exportData()" title="Скачать резервную копию всех фото для переноса">
-          Экспорт фото
+          Экспорт
         </button>
         <button class="sync-btn" onclick="document.getElementById('importInput').click()" title="Загрузить сохраненные фото">
-          Импорт фото
+          Импорт
         </button>
         <input type="file" id="importInput" accept=".json" style="display:none;" onchange="importData(event)">
       </div>

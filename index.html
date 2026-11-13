@@ -737,41 +737,41 @@
       background: rgba(0,0,0,0.3);
     }
 
-    /* Ручки масштабирования по углам */
+    /* Ручки масштабирования по углам (увеличены для легкого тача на телефоне) */
     .fs-resize-handle {
       position: absolute;
-      width: 18px;
-      height: 18px;
+      width: 28px;
+      height: 28px;
       background: var(--gold);
-      border: 2px solid #000;
+      border: 3px solid #000;
       border-radius: 50%;
       z-index: 10;
       touch-action: none;
-      opacity: 0;
+      opacity: 0.9;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
       transition: opacity 0.15s ease, transform 0.15s ease;
     }
-    .fs-ref-card:hover .fs-resize-handle,
-    .fs-ref-card.selected .fs-resize-handle {
-      opacity: 1;
+    .fs-resize-handle:active {
+      transform: scale(1.2);
     }
     .fs-resize-handle.br {
-      right: -8px;
-      bottom: -8px;
+      right: -12px;
+      bottom: -12px;
       cursor: se-resize;
     }
     .fs-resize-handle.bl {
-      left: -8px;
-      bottom: -8px;
+      left: -12px;
+      bottom: -12px;
       cursor: sw-resize;
     }
     .fs-resize-handle.tr {
-      right: -8px;
-      top: -8px;
+      right: -12px;
+      top: -12px;
       cursor: ne-resize;
     }
     .fs-resize-handle.tl {
-      left: -8px;
-      top: -8px;
+      left: -12px;
+      top: -12px;
       cursor: nw-resize;
     }
 
@@ -2020,7 +2020,38 @@
       viewport.addEventListener('pointerdown', (e) => {
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-        // Проверяем, кликнули ли по ручке изменения размера
+        // Если коснулись двумя пальцами:
+        if (activePointers.size === 2) {
+          const pts = Array.from(activePointers.values());
+          initialPinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+
+          // Проверяем: коснулись ли двумя пальцами одного выбранного изображения?
+          const cardEl = e.target.closest('.fs-ref-card');
+          const targetCard = cardEl ? pureRefState.cards.find(c => c.id === cardEl.dataset.id) : (pureRefState.selectedCardId ? pureRefState.cards.find(c => c.id === pureRefState.selectedCardId) : null);
+
+          if (targetCard) {
+            // Режим масштабирования отдельной картинки двумя пальцами
+            pureRefState.isPanning = false;
+            pureRefState.activeDrag = {
+              type: 'pinch-card',
+              cardId: targetCard.id,
+              initialDist: initialPinchDistance,
+              startW: targetCard.width,
+              startH: targetCard.height,
+              startX: targetCard.x,
+              startY: targetCard.y,
+              aspect: targetCard.aspect
+            };
+          } else {
+            // Режим зума всего холста двумя пальцами
+            pureRefState.isPanning = false;
+            pureRefState.activeDrag = null;
+            initialPinchZoom = pureRefState.zoom;
+          }
+          return;
+        }
+
+        // Проверяем, кликнули ли по ручке изменения размера (1 палец / мышь)
         const handleEl = e.target.closest('.fs-resize-handle');
         if (handleEl) {
           e.stopPropagation();
@@ -2049,9 +2080,9 @@
           return;
         }
 
-        // Проверяем, кликнули ли по самой карточке референса
+        // Проверяем, кликнули ли по самой карточке референса (1 палец -> перетаскивание)
         const cardEl = e.target.closest('.fs-ref-card');
-        if (cardEl && e.button !== 2) { // ЛКМ или тач по карточке
+        if (cardEl && e.button !== 2) {
           e.stopPropagation();
           const card = pureRefState.cards.find(c => c.id === cardEl.dataset.id);
           if (card) {
@@ -2081,13 +2112,6 @@
           pureRefState.selectedCardId = null;
           updateCardsSelection();
           viewport.setPointerCapture(e.pointerId);
-        } else if (activePointers.size === 2) {
-          // Мультитач pinch-to-zoom на мобильных устройствах
-          pureRefState.isPanning = false;
-          pureRefState.activeDrag = null;
-          const pts = Array.from(activePointers.values());
-          initialPinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-          initialPinchZoom = pureRefState.zoom;
         }
       });
 
@@ -2097,27 +2121,51 @@
           activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         }
 
-        // Обработка двухпальцевого масштабирования (pinch)
+        // Двухпальцевый жест
         if (activePointers.size === 2 && initialPinchDistance) {
           const pts = Array.from(activePointers.values());
           const curDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-          const midX = (pts[0].x + pts[1].x) / 2;
-          const midY = (pts[0].y + pts[1].y) / 2;
+          if (curDist <= 0) return;
 
-          const ratio = curDist / initialPinchDistance;
-          const newZoom = Math.min(Math.max(initialPinchZoom * ratio, 0.1), 5);
-          const oldZoom = pureRefState.zoom;
+          // Вариант А: масштабирование отдельной картинки двумя пальцами
+          if (pureRefState.activeDrag && pureRefState.activeDrag.type === 'pinch-card') {
+            const drag = pureRefState.activeDrag;
+            const card = pureRefState.cards.find(c => c.id === drag.cardId);
+            if (card) {
+              const scaleRatio = curDist / drag.initialDist;
+              const newW = Math.max(80, Math.round(drag.startW * scaleRatio));
+              const newH = Math.round(newW / drag.aspect);
 
-          pureRefState.panX = midX - (midX - pureRefState.panX) * (newZoom / oldZoom);
-          pureRefState.panY = midY - (midY - pureRefState.panY) * (newZoom / oldZoom);
-          pureRefState.zoom = newZoom;
+              // Масштабируем от центра картинки, чтобы она не улетала и не дергалась
+              card.x = Math.round(drag.startX - (newW - drag.startW) / 2);
+              card.y = Math.round(drag.startY - (newH - drag.startH) / 2);
+              card.width = newW;
+              card.height = newH;
+              applyCardStyles(card);
+            }
+            return;
+          }
 
-          updatePureRefWorldTransform();
-          return;
+          // Вариант Б: масштабирование всего холста (когда пальцы на пустом месте)
+          if (initialPinchZoom) {
+            const midX = (pts[0].x + pts[1].x) / 2;
+            const midY = (pts[0].y + pts[1].y) / 2;
+
+            const ratio = curDist / initialPinchDistance;
+            const newZoom = Math.min(Math.max(initialPinchZoom * ratio, 0.1), 5);
+            const oldZoom = pureRefState.zoom;
+
+            pureRefState.panX = midX - (midX - pureRefState.panX) * (newZoom / oldZoom);
+            pureRefState.panY = midY - (midY - pureRefState.panY) * (newZoom / oldZoom);
+            pureRefState.zoom = newZoom;
+
+            updatePureRefWorldTransform();
+            return;
+          }
         }
 
-        // Перетаскивание или изменение размера отдельного референса
-        if (pureRefState.activeDrag) {
+        // Перетаскивание или изменение размера отдельного референса одним пальцем / мышью
+        if (pureRefState.activeDrag && pureRefState.activeDrag.type !== 'pinch-card') {
           const drag = pureRefState.activeDrag;
           const card = pureRefState.cards.find(c => c.id === drag.cardId);
           if (!card) return;

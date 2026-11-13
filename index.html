@@ -1375,9 +1375,6 @@
       </div>
 
       <div class="search-results-grid" id="searchResultsGrid">
-        <div class="search-empty-state">
-          <span>Введите слово и нажмите Enter или кнопку поиска</span>
-        </div>
       </div>
     </div>
   </div>
@@ -2686,7 +2683,7 @@
       const grid = document.getElementById('searchResultsGrid');
 
       if (!query) {
-        grid.innerHTML = '<div class="search-empty-state"><span>Введите поисковый запрос</span></div>';
+        grid.innerHTML = '';
         return;
       }
 

@@ -1256,7 +1256,7 @@
           </div>
         </div>
 
-        <div class="album-grid-container" id="albumGrid">
+        <div class="album-grid-container" id="albumGrid" onclick="handleAlbumCanvasClick(event)">
           <!-- Фотографии активной вкладки -->
         </div>
       </section>
@@ -1582,10 +1582,26 @@
       openLightbox(imageSrc, event);
     }
 
-    // Клик на пустое место доски -> все объекты объединяются на весь экран
-    function handleCanvasClick(e) {
+    // Клик на пустое место альбома -> открытие всех картинок текущей категории крупно на холсте
+    async function handleAlbumCanvasClick(e) {
+      if (e.target.closest('.photo-card') || e.target.closest('.empty-tab-state')) return;
+      const items = await getFolderItems(activeTabId);
+      if (!items || items.length === 0) return;
+      openFullscreenItems(items);
+    }
+
+    // Клик на пустое место доски -> все объекты с доски открываются крупно на холсте
+    async function handleCanvasClick(e) {
       if (e.target.closest('.board-item') || e.target.closest('.empty-board-notice')) return;
-      openFullscreenBoard();
+      if (boardItemIds.length === 0) return;
+      const count = Math.min(boardItemIds.length, 5);
+      const items = [];
+      for (let i = 0; i < count; i++) {
+        const item = await getItemById(boardItemIds[i]);
+        if (item) items.push(item);
+      }
+      if (items.length === 0) return;
+      openFullscreenItems(items);
     }
 
     // ==========================================================
@@ -1869,12 +1885,11 @@
       card.el.style.height = `${card.height}px`;
     }
 
-    async function openFullscreenBoard() {
-      if (boardItemIds.length === 0) return;
+    async function openFullscreenItems(itemsList) {
+      if (!itemsList || itemsList.length === 0) return;
 
       const modal = document.getElementById('fullscreenBoardModal');
       const world = document.getElementById('pureRefWorld');
-      const count = Math.min(boardItemIds.length, 5);
 
       world.innerHTML = '';
       pureRefState.cards = [];
@@ -1883,9 +1898,8 @@
 
       // Загружаем данные референсов
       const loadedItems = [];
-      for (let i = 0; i < count; i++) {
-        const id = boardItemIds[i];
-        const item = await getItemById(id);
+      for (let i = 0; i < itemsList.length; i++) {
+        const item = itemsList[i];
         if (item) {
           const aspectData = await loadImageAspect(item.image);
           loadedItems.push({ item, aspectData });
@@ -1894,9 +1908,10 @@
 
       if (loadedItems.length === 0) return;
 
-      // Первоначальное чистое размещение в стиле PureRef
-      const baseHeight = 320;
-      const gap = 16;
+      // Размещение в стиле PureRef
+      const isPortrait = window.innerHeight > window.innerWidth;
+      const baseHeight = isPortrait ? 380 : 440;
+      const gap = 18;
       let currentX = 0;
 
       loadedItems.forEach(({ item, aspectData }, idx) => {
@@ -1941,7 +1956,18 @@
 
       modal.classList.add('open');
       initPureRefEvents();
-      resetPureRefView();
+      autoLayoutPureRef();
+    }
+
+    async function openFullscreenBoard() {
+      if (boardItemIds.length === 0) return;
+      const count = Math.min(boardItemIds.length, 5);
+      const items = [];
+      for (let i = 0; i < count; i++) {
+        const item = await getItemById(boardItemIds[i]);
+        if (item) items.push(item);
+      }
+      openFullscreenItems(items);
     }
 
     function closeFullscreenBoard(event) {

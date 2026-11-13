@@ -637,26 +637,37 @@
       border-color: var(--gold);
     }
 
-    /* Компактный коллаж референсов: без рамок, вплотную друг к другу */
+    /* Компактный умный коллаж: картинки НЕ обрезаются, прилегают плотно */
     .fs-seamless-collage {
       width: 100vw;
       height: 100vh;
       max-width: 100vw;
       max-height: 100vh;
-      display: grid;
-      gap: 0px; /* Встык без рамок и зазоров */
+      display: flex;
+      flex-direction: column;
       background: #000;
       overflow: hidden;
-      padding: 0;
-      margin: 0;
+      padding: 6px;
+      padding-top: max(48px, env(safe-area-inset-top, 48px));
+      padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+      gap: 6px;
       box-sizing: border-box;
-      align-items: stretch;
-      justify-items: stretch;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .fs-collage-row {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
     }
 
     .fs-seamless-cell {
       position: relative;
-      width: 100%;
       height: 100%;
       min-width: 0;
       min-height: 0;
@@ -664,16 +675,18 @@
       background: transparent;
       border: none;
       display: flex;
-      align-items: stretch;
-      justify-content: stretch;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       box-sizing: border-box;
       padding: 0;
     }
     .fs-seamless-cell img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover; /* Единый слитный арт-коллаж без пустот */
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain; /* Картинка видна целиком, не обрезается */
       display: block;
       pointer-events: none;
     }
@@ -1434,8 +1447,20 @@
     }
 
     // ==========================================================
-    // ВСЕ ОБЪЕКТЫ НА ВЕСЬ ЭКРАН (Компактный коллаж до 5 рефов)
+    // ВСЕ ОБЪЕКТЫ НА ВЕСЬ ЭКРАН (Умный конструктор коллажа до 5 рефов)
     // ==========================================================
+    function loadImageAspect(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const ratio = (img.naturalWidth || 1) / (img.naturalHeight || 1);
+          resolve(ratio);
+        };
+        img.onerror = () => resolve(1);
+        img.src = src;
+      });
+    }
+
     async function openFullscreenBoard() {
       if (boardItemIds.length === 0) return;
 
@@ -1445,65 +1470,155 @@
       const count = Math.min(boardItemIds.length, 5);
       const isPortrait = window.innerHeight > window.innerWidth;
 
-      // Оптимальная раскладка для 1-5 референсов, чтобы всё было крупно и без перекрытия
-      let html = '';
-      if (count === 1) {
-        collage.style.gridTemplateColumns = '1fr';
-        collage.style.gridTemplateRows = '1fr';
-      } else if (count === 2) {
-        if (isPortrait) {
-          collage.style.gridTemplateColumns = '1fr';
-          collage.style.gridTemplateRows = '1fr 1fr';
-        } else {
-          collage.style.gridTemplateColumns = '1fr 1fr';
-          collage.style.gridTemplateRows = '1fr';
-        }
-      } else if (count === 3) {
-        if (isPortrait) {
-          collage.style.gridTemplateColumns = '1fr';
-          collage.style.gridTemplateRows = 'repeat(3, 1fr)';
-        } else {
-          collage.style.gridTemplateColumns = 'repeat(3, 1fr)';
-          collage.style.gridTemplateRows = '1fr';
-        }
-      } else if (count === 4) {
-        collage.style.gridTemplateColumns = '1fr 1fr';
-        collage.style.gridTemplateRows = '1fr 1fr';
-      } else if (count === 5) {
-        if (isPortrait) {
-          // На вертикальном экране смартфона: верхний ряд 2 фото, нижний ряд 3 фото
-          collage.style.gridTemplateColumns = 'repeat(6, 1fr)';
-          collage.style.gridTemplateRows = '1fr 1fr';
-        } else {
-          // На горизонтальном экране: 3 фото сверху, 2 фото снизу
-          collage.style.gridTemplateColumns = 'repeat(6, 1fr)';
-          collage.style.gridTemplateRows = '1fr 1fr';
-        }
-      }
-
+      // Загружаем данные картинок и их реальные пропорции
+      const loadedItems = [];
       for (let i = 0; i < count; i++) {
         const id = boardItemIds[i];
         const item = await getItemById(id);
-        if (!item) continue;
-
-        let spanStyle = '';
-        if (count === 5) {
-          if (isPortrait) {
-            // 2 фото вверху (по 3 колонки), 3 фото внизу (по 2 колонки)
-            if (i < 2) spanStyle = 'grid-column: span 3;';
-            else spanStyle = 'grid-column: span 2;';
-          } else {
-            // 3 фото вверху (по 2 колонки), 2 фото внизу (по 3 колонки)
-            if (i < 3) spanStyle = 'grid-column: span 2;';
-            else spanStyle = 'grid-column: span 3;';
-          }
+        if (item) {
+          const ratio = await loadImageAspect(item.image);
+          loadedItems.push({ item, ratio });
         }
+      }
 
-        html += `
-          <div class="fs-seamless-cell" style="${spanStyle}" onclick="handleFsCellClick('${item.image}', event)">
-            <img src="${item.image}" alt="Объект">
+      if (loadedItems.length === 0) return;
+
+      let html = '';
+
+      if (loadedItems.length === 1) {
+        html = `
+          <div class="fs-collage-row" style="flex: 1;">
+            <div class="fs-seamless-cell" style="flex: 1;" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
+              <img src="${loadedItems[0].item.image}" alt="Объект">
+            </div>
           </div>
         `;
+      } else if (loadedItems.length === 2) {
+        if (isPortrait) {
+          html = `
+            <div class="fs-collage-row" style="flex: 1;">
+              <div class="fs-seamless-cell" style="flex: 1;" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
+                <img src="${loadedItems[0].item.image}" alt="Объект">
+              </div>
+            </div>
+            <div class="fs-collage-row" style="flex: 1;">
+              <div class="fs-seamless-cell" style="flex: 1;" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
+                <img src="${loadedItems[1].item.image}" alt="Объект">
+              </div>
+            </div>
+          `;
+        } else {
+          html = `
+            <div class="fs-collage-row" style="flex: 1;">
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
+                <img src="${loadedItems[0].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
+                <img src="${loadedItems[1].item.image}" alt="Объект">
+              </div>
+            </div>
+          `;
+        }
+      } else if (loadedItems.length === 3) {
+        if (isPortrait) {
+          html = `
+            <div class="fs-collage-row" style="flex: 1.1;">
+              <div class="fs-seamless-cell" style="flex: 1;" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
+                <img src="${loadedItems[0].item.image}" alt="Объект">
+              </div>
+            </div>
+            <div class="fs-collage-row" style="flex: 1;">
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
+                <img src="${loadedItems[1].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
+                <img src="${loadedItems[2].item.image}" alt="Объект">
+              </div>
+            </div>
+          `;
+        } else {
+          html = `
+            <div class="fs-collage-row" style="flex: 1;">
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
+                <img src="${loadedItems[0].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
+                <img src="${loadedItems[1].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
+                <img src="${loadedItems[2].item.image}" alt="Объект">
+              </div>
+            </div>
+          `;
+        }
+      } else if (loadedItems.length === 4) {
+        html = `
+          <div class="fs-collage-row" style="flex: 1;">
+            <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
+              <img src="${loadedItems[0].item.image}" alt="Объект">
+            </div>
+            <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
+              <img src="${loadedItems[1].item.image}" alt="Объект">
+            </div>
+          </div>
+          <div class="fs-collage-row" style="flex: 1;">
+            <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
+              <img src="${loadedItems[2].item.image}" alt="Объект">
+            </div>
+            <div class="fs-seamless-cell" style="flex: ${loadedItems[3].ratio};" onclick="handleFsCellClick('${loadedItems[3].item.image}', event)">
+              <img src="${loadedItems[3].item.image}" alt="Объект">
+            </div>
+          </div>
+        `;
+      } else if (loadedItems.length === 5) {
+        if (isPortrait) {
+          // Верхний ряд: 2 картинки с пропорциональной шириной
+          // Нижний ряд: 3 картинки с пропорциональной шириной
+          html = `
+            <div class="fs-collage-row" style="flex: 1.15;">
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
+                <img src="${loadedItems[0].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
+                <img src="${loadedItems[1].item.image}" alt="Объект">
+              </div>
+            </div>
+            <div class="fs-collage-row" style="flex: 1;">
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
+                <img src="${loadedItems[2].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[3].ratio};" onclick="handleFsCellClick('${loadedItems[3].item.image}', event)">
+                <img src="${loadedItems[3].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[4].ratio};" onclick="handleFsCellClick('${loadedItems[4].item.image}', event)">
+                <img src="${loadedItems[4].item.image}" alt="Объект">
+              </div>
+            </div>
+          `;
+        } else {
+          // Горизонтальный экран: 3 картинки сверху, 2 картинки снизу
+          html = `
+            <div class="fs-collage-row" style="flex: 1;">
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
+                <img src="${loadedItems[0].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
+                <img src="${loadedItems[1].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
+                <img src="${loadedItems[2].item.image}" alt="Объект">
+              </div>
+            </div>
+            <div class="fs-collage-row" style="flex: 1.15;">
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[3].ratio};" onclick="handleFsCellClick('${loadedItems[3].item.image}', event)">
+                <img src="${loadedItems[3].item.image}" alt="Объект">
+              </div>
+              <div class="fs-seamless-cell" style="flex: ${loadedItems[4].ratio};" onclick="handleFsCellClick('${loadedItems[4].item.image}', event)">
+                <img src="${loadedItems[4].item.image}" alt="Объект">
+              </div>
+            </div>
+          `;
+        }
       }
 
       collage.innerHTML = html;

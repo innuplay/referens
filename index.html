@@ -792,7 +792,7 @@
       <div class="header-center-pill">создать персонажа</div>
 
       <div class="header-hint">
-        Вставить: <kbd>Ctrl + V</kbd> или кнопка <b>«+ Добавить фото»</b>
+        Вставить: скопируйте картинку и нажмите <kbd>Ctrl + V</kbd> (или «Вставить» на телефоне)
       </div>
     </header>
 
@@ -807,12 +807,6 @@
 
         <div class="tab-header-info">
           <div class="tab-title-text" id="activeTabTitle">фото</div>
-          <div class="tab-actions">
-            <input type="file" id="fileInput" accept="image/*" multiple style="display:none;" onchange="handleFileSelect(event)">
-            <button class="add-photo-btn" onclick="document.getElementById('fileInput').click()">
-              + Добавить фото
-            </button>
-          </div>
         </div>
 
         <div class="album-grid-container" id="albumGrid">
@@ -1010,7 +1004,7 @@
         container.innerHTML = `
           <div class="empty-tab-state">
             <b>В этой вкладке пока пусто</b>
-            <span>Нажмите «+ Добавить фото» или вставьте изображение через Ctrl + V</span>
+            <span>Скопируйте картинку в буфер обмена и вставьте сюда</span>
           </div>
         `;
         return;

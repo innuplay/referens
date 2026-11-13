@@ -945,9 +945,6 @@
         <div class="tab-header-info">
           <div class="tab-title-text" id="activeTabTitle">фото</div>
           <div class="tab-actions">
-            <button class="icon-action-btn" onclick="window.location.reload(true)" title="Обновить страницу">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            </button>
             <input type="file" id="photoFileInput" accept="image/*" multiple style="display:none;" onchange="handleFileSelect(event)">
             <button class="paste-clip-btn" onclick="document.getElementById('photoFileInput').click()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -956,6 +953,9 @@
             <button class="paste-clip-btn" onclick="pasteFromClipboard()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
               Вставить
+            </button>
+            <button class="icon-action-btn" onclick="window.location.reload(true)" title="Обновить страницу">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             </button>
           </div>
         </div>

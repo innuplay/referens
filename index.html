@@ -589,32 +589,79 @@
     }
 
     /* ==========================================================
-       ПОЛНОЭКРАННОЕ ОБЪЕДИНЕНИЕ ВСЕХ ОБЪЕКТОВ
+       ПОЛНОЭКРАННОЕ ОБЪЕДИНЕНИЕ ВСЕХ ОБЪЕКТОВ (PURE REF CANVAS)
        ========================================================== */
     .fullscreen-board-modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: #000000;
+      background: #0d0f15;
       z-index: 9990;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      box-sizing: border-box;
       overflow: hidden;
-      cursor: zoom-out;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
     }
     .fullscreen-board-modal.open {
-      display: flex;
+      display: block;
     }
 
-    /* Кнопка закрытия в правом верхнем углу (компактная круглая иконка ✕) */
-    .fs-floating-close {
+    /* Верхняя панель управления PureRef */
+    .fs-pureref-bar {
       position: absolute;
-      top: max(14px, env(safe-area-inset-top, 14px));
+      top: max(12px, env(safe-area-inset-top, 12px));
+      left: 14px;
       right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       z-index: 10005;
+      pointer-events: none;
+    }
+    .fs-pureref-hints {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.7);
+      pointer-events: auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .fs-pureref-hints span b {
+      color: var(--gold);
+    }
+    .fs-pureref-actions {
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+    .fs-tool-btn {
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .fs-tool-btn:hover, .fs-tool-btn:active {
+      background: var(--gold);
+      color: #000;
+      border-color: var(--gold);
+    }
+    .fs-floating-close {
       background: rgba(0, 0, 0, 0.75);
       border: 1px solid rgba(255, 255, 255, 0.25);
       color: #fff;
@@ -625,70 +672,109 @@
       backdrop-filter: blur(8px);
       transition: all 0.15s ease;
       touch-action: manipulation;
-      pointer-events: auto;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0;
     }
     .fs-floating-close:hover, .fs-floating-close:active {
-      background: var(--gold);
-      color: #000;
-      border-color: var(--gold);
+      background: #ef4444;
+      color: #fff;
+      border-color: #ef4444;
     }
 
-    /* Компактный умный коллаж: картинки НЕ обрезаются, прилегают плотно */
-    .fs-seamless-collage {
+    /* Холст бесконечного перемещения PureRef */
+    .fs-pureref-viewport {
+      position: absolute;
+      inset: 0;
       width: 100vw;
       height: 100vh;
-      max-width: 100vw;
-      max-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: #000;
       overflow: hidden;
-      padding: 6px;
-      padding-top: max(48px, env(safe-area-inset-top, 48px));
-      padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
-      gap: 6px;
-      box-sizing: border-box;
-      justify-content: center;
-      align-items: center;
+      cursor: grab;
+      background-color: #0b0c10;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .fs-pureref-viewport:active {
+      cursor: grabbing;
     }
 
-    .fs-collage-row {
-      display: flex;
-      flex-direction: row;
+    .fs-pureref-world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    /* Отдельный элемент на холсте PureRef */
+    .fs-ref-card {
+      position: absolute;
+      touch-action: none;
+      cursor: move;
+      border-radius: 4px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+      transition: box-shadow 0.15s ease;
+      transform-origin: top left;
+      user-select: none;
+    }
+    .fs-ref-card:hover {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9);
+    }
+    .fs-ref-card.selected {
+      outline: 2px solid var(--gold);
+      outline-offset: 1px;
+      box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);
+    }
+    .fs-ref-card img {
       width: 100%;
-      gap: 6px;
-      align-items: center;
-      justify-content: center;
-      min-height: 0;
-    }
-
-    .fs-seamless-cell {
-      position: relative;
       height: 100%;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
-      background: transparent;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-sizing: border-box;
-      padding: 0;
-    }
-    .fs-seamless-cell img {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
-      object-fit: contain; /* Картинка видна целиком, не обрезается */
       display: block;
       pointer-events: none;
+      border-radius: 4px;
+      object-fit: contain;
+      background: rgba(0,0,0,0.3);
+    }
+
+    /* Ручки масштабирования по углам */
+    .fs-resize-handle {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: var(--gold);
+      border: 2px solid #000;
+      border-radius: 50%;
+      z-index: 10;
+      touch-action: none;
+      opacity: 0;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .fs-ref-card:hover .fs-resize-handle,
+    .fs-ref-card.selected .fs-resize-handle {
+      opacity: 1;
+    }
+    .fs-resize-handle.br {
+      right: -8px;
+      bottom: -8px;
+      cursor: se-resize;
+    }
+    .fs-resize-handle.bl {
+      left: -8px;
+      bottom: -8px;
+      cursor: sw-resize;
+    }
+    .fs-resize-handle.tr {
+      right: -8px;
+      top: -8px;
+      cursor: ne-resize;
+    }
+    .fs-resize-handle.tl {
+      left: -8px;
+      top: -8px;
+      cursor: nw-resize;
     }
 
     /* Одиночный Lightbox */
@@ -1203,13 +1289,30 @@
     </main>
   </div>
 
-  <!-- ПОЛНОЭКРАННАЯ ОБЪЕДИНЕННАЯ ДОСКА (ВСЕ ОБЪЕКТЫ ВСТЫК БЕЗ РАМОК) -->
-  <div class="fullscreen-board-modal" id="fullscreenBoardModal" onclick="closeFullscreenBoard()">
-    <button type="button" class="fs-floating-close" onclick="closeFullscreenBoard(event)" ontouchstart="closeFullscreenBoard(event)" title="Закрыть">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-    </button>
-    <div class="fs-seamless-collage" id="fsCollageContainer">
-      <!-- Все картинки вплотную друг к другу -->
+  <!-- ПОЛНОЭКРАННАЯ ОБЪЕДИНЕННАЯ ДОСКА В СТИЛЕ PUREREF -->
+  <div class="fullscreen-board-modal" id="fullscreenBoardModal">
+    <!-- Верхняя панель PureRef -->
+    <div class="fs-pureref-bar">
+      <div class="fs-pureref-hints">
+        <span><b>ЛКМ</b> — двигать реф</span>
+        <span><b>Углы</b> — размер</span>
+        <span><b>ПКМ / фон</b> — панорама</span>
+        <span><b>Колёсико</b> — зум</span>
+      </div>
+      <div class="fs-pureref-actions">
+        <button type="button" class="fs-tool-btn" onclick="resetPureRefView()" title="Сбросить масштаб и положение">Сброс вида</button>
+        <button type="button" class="fs-tool-btn" onclick="autoLayoutPureRef()" title="Аккуратно расставить в ряд">Упорядочить</button>
+        <button type="button" class="fs-floating-close" onclick="closeFullscreenBoard(event)" ontouchstart="closeFullscreenBoard(event)" title="Закрыть (Esc)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Интерактивный бесконечный вьюпорт PureRef -->
+    <div class="fs-pureref-viewport" id="pureRefViewport">
+      <div class="fs-pureref-world" id="pureRefWorld">
+        <!-- Карточки с картинками для свободного перетаскивания и ресайза -->
+      </div>
     </div>
   </div>
 
@@ -1499,192 +1602,413 @@
     }
 
     // ==========================================================
-    // ВСЕ ОБЪЕКТЫ НА ВЕСЬ ЭКРАН (Умный конструктор коллажа до 5 рефов)
+    // ВСЕ ОБЪЕКТЫ НА ВЕСЬ ЭКРАН: ИНТЕРАКТИВНЫЙ ХОЛСТ PUREREF
+    // (Перемещение, зум холста, свободное перемещение и ресайз каждого рефа)
     // ==========================================================
+    let pureRefState = {
+      panX: 0,
+      panY: 0,
+      zoom: 1,
+      isPanning: false,
+      startPanX: 0,
+      startPanY: 0,
+      cards: [], // { id, x, y, width, height, aspect, el }
+      selectedCardId: null,
+      activeDrag: null, // { type: 'move'|'resize', cardId, startPointerX, startPointerY, startX, startY, startW, startH, handle, aspect }
+      topZIndex: 10
+    };
+
     function loadImageAspect(src) {
       return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
-          const ratio = (img.naturalWidth || 1) / (img.naturalHeight || 1);
-          resolve(ratio);
+          const w = img.naturalWidth || 300;
+          const h = img.naturalHeight || 300;
+          resolve({ ratio: w / h, width: w, height: h });
         };
-        img.onerror = () => resolve(1);
+        img.onerror = () => resolve({ ratio: 1, width: 300, height: 300 });
         img.src = src;
       });
+    }
+
+    function updatePureRefWorldTransform() {
+      const world = document.getElementById('pureRefWorld');
+      if (world) {
+        world.style.transform = `translate(${pureRefState.panX}px, ${pureRefState.panY}px) scale(${pureRefState.zoom})`;
+      }
+    }
+
+    function resetPureRefView() {
+      if (pureRefState.cards.length === 0) {
+        pureRefState.panX = window.innerWidth / 2;
+        pureRefState.panY = window.innerHeight / 2;
+        pureRefState.zoom = 1;
+        updatePureRefWorldTransform();
+        return;
+      }
+
+      // Вычисляем охватывающий прямоугольник (bounding box) всех картинок
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      pureRefState.cards.forEach(c => {
+        if (c.x < minX) minX = c.x;
+        if (c.y < minY) minY = c.y;
+        if (c.x + c.width > maxX) maxX = c.x + c.width;
+        if (c.y + c.height > maxY) maxY = c.y + c.height;
+      });
+
+      const bboxW = (maxX - minX) || 400;
+      const bboxH = (maxY - minY) || 400;
+      const margin = 80;
+
+      const availW = Math.max(window.innerWidth - margin * 2, 200);
+      const availH = Math.max(window.innerHeight - margin * 2, 200);
+
+      const zoom = Math.min(availW / bboxW, availH / bboxH, 1.6);
+      pureRefState.zoom = Math.max(0.2, zoom);
+
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+
+      pureRefState.panX = window.innerWidth / 2 - centerX * pureRefState.zoom;
+      pureRefState.panY = window.innerHeight / 2 - centerY * pureRefState.zoom;
+
+      updatePureRefWorldTransform();
+    }
+
+    function autoLayoutPureRef() {
+      if (pureRefState.cards.length === 0) return;
+      const count = pureRefState.cards.length;
+
+      // Базовая высота карточки
+      const baseH = 340;
+      const gap = 16;
+      let currentX = 0;
+
+      pureRefState.cards.forEach((c) => {
+        const w = Math.round(baseH * c.aspect);
+        c.width = w;
+        c.height = baseH;
+        c.x = currentX;
+        c.y = 0;
+        currentX += w + gap;
+        applyCardStyles(c);
+      });
+
+      resetPureRefView();
+      showToast('Референсы упорядочены');
+    }
+
+    function applyCardStyles(card) {
+      if (!card.el) return;
+      card.el.style.left = `${card.x}px`;
+      card.el.style.top = `${card.y}px`;
+      card.el.style.width = `${card.width}px`;
+      card.el.style.height = `${card.height}px`;
     }
 
     async function openFullscreenBoard() {
       if (boardItemIds.length === 0) return;
 
       const modal = document.getElementById('fullscreenBoardModal');
-      const collage = document.getElementById('fsCollageContainer');
-
+      const world = document.getElementById('pureRefWorld');
       const count = Math.min(boardItemIds.length, 5);
-      const isPortrait = window.innerHeight > window.innerWidth;
 
-      // Загружаем данные картинок и их реальные пропорции
+      world.innerHTML = '';
+      pureRefState.cards = [];
+      pureRefState.selectedCardId = null;
+      pureRefState.topZIndex = 10;
+
+      // Загружаем данные референсов
       const loadedItems = [];
       for (let i = 0; i < count; i++) {
         const id = boardItemIds[i];
         const item = await getItemById(id);
         if (item) {
-          const ratio = await loadImageAspect(item.image);
-          loadedItems.push({ item, ratio });
+          const aspectData = await loadImageAspect(item.image);
+          loadedItems.push({ item, aspectData });
         }
       }
 
       if (loadedItems.length === 0) return;
 
-      let html = '';
+      // Первоначальное чистое размещение в стиле PureRef
+      const baseHeight = 320;
+      const gap = 16;
+      let currentX = 0;
 
-      if (loadedItems.length === 1) {
-        html = `
-          <div class="fs-collage-row" style="flex: 1;">
-            <div class="fs-seamless-cell" style="flex: 1;" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
-              <img src="${loadedItems[0].item.image}" alt="Объект">
-            </div>
-          </div>
-        `;
-      } else if (loadedItems.length === 2) {
-        if (isPortrait) {
-          html = `
-            <div class="fs-collage-row" style="flex: 1;">
-              <div class="fs-seamless-cell" style="flex: 1;" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
-                <img src="${loadedItems[0].item.image}" alt="Объект">
-              </div>
-            </div>
-            <div class="fs-collage-row" style="flex: 1;">
-              <div class="fs-seamless-cell" style="flex: 1;" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
-                <img src="${loadedItems[1].item.image}" alt="Объект">
-              </div>
-            </div>
-          `;
-        } else {
-          html = `
-            <div class="fs-collage-row" style="flex: 1;">
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
-                <img src="${loadedItems[0].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
-                <img src="${loadedItems[1].item.image}" alt="Объект">
-              </div>
-            </div>
-          `;
-        }
-      } else if (loadedItems.length === 3) {
-        if (isPortrait) {
-          html = `
-            <div class="fs-collage-row" style="flex: 1.1;">
-              <div class="fs-seamless-cell" style="flex: 1;" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
-                <img src="${loadedItems[0].item.image}" alt="Объект">
-              </div>
-            </div>
-            <div class="fs-collage-row" style="flex: 1;">
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
-                <img src="${loadedItems[1].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
-                <img src="${loadedItems[2].item.image}" alt="Объект">
-              </div>
-            </div>
-          `;
-        } else {
-          html = `
-            <div class="fs-collage-row" style="flex: 1;">
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
-                <img src="${loadedItems[0].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
-                <img src="${loadedItems[1].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
-                <img src="${loadedItems[2].item.image}" alt="Объект">
-              </div>
-            </div>
-          `;
-        }
-      } else if (loadedItems.length === 4) {
-        html = `
-          <div class="fs-collage-row" style="flex: 1;">
-            <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
-              <img src="${loadedItems[0].item.image}" alt="Объект">
-            </div>
-            <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
-              <img src="${loadedItems[1].item.image}" alt="Объект">
-            </div>
-          </div>
-          <div class="fs-collage-row" style="flex: 1;">
-            <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
-              <img src="${loadedItems[2].item.image}" alt="Объект">
-            </div>
-            <div class="fs-seamless-cell" style="flex: ${loadedItems[3].ratio};" onclick="handleFsCellClick('${loadedItems[3].item.image}', event)">
-              <img src="${loadedItems[3].item.image}" alt="Объект">
-            </div>
-          </div>
-        `;
-      } else if (loadedItems.length === 5) {
-        if (isPortrait) {
-          // Верхний ряд: 2 картинки с пропорциональной шириной
-          // Нижний ряд: 3 картинки с пропорциональной шириной
-          html = `
-            <div class="fs-collage-row" style="flex: 1.15;">
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
-                <img src="${loadedItems[0].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
-                <img src="${loadedItems[1].item.image}" alt="Объект">
-              </div>
-            </div>
-            <div class="fs-collage-row" style="flex: 1;">
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
-                <img src="${loadedItems[2].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[3].ratio};" onclick="handleFsCellClick('${loadedItems[3].item.image}', event)">
-                <img src="${loadedItems[3].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[4].ratio};" onclick="handleFsCellClick('${loadedItems[4].item.image}', event)">
-                <img src="${loadedItems[4].item.image}" alt="Объект">
-              </div>
-            </div>
-          `;
-        } else {
-          // Горизонтальный экран: 3 картинки сверху, 2 картинки снизу
-          html = `
-            <div class="fs-collage-row" style="flex: 1;">
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[0].ratio};" onclick="handleFsCellClick('${loadedItems[0].item.image}', event)">
-                <img src="${loadedItems[0].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[1].ratio};" onclick="handleFsCellClick('${loadedItems[1].item.image}', event)">
-                <img src="${loadedItems[1].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[2].ratio};" onclick="handleFsCellClick('${loadedItems[2].item.image}', event)">
-                <img src="${loadedItems[2].item.image}" alt="Объект">
-              </div>
-            </div>
-            <div class="fs-collage-row" style="flex: 1.15;">
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[3].ratio};" onclick="handleFsCellClick('${loadedItems[3].item.image}', event)">
-                <img src="${loadedItems[3].item.image}" alt="Объект">
-              </div>
-              <div class="fs-seamless-cell" style="flex: ${loadedItems[4].ratio};" onclick="handleFsCellClick('${loadedItems[4].item.image}', event)">
-                <img src="${loadedItems[4].item.image}" alt="Объект">
-              </div>
-            </div>
-          `;
-        }
-      }
+      loadedItems.forEach(({ item, aspectData }, idx) => {
+        const aspect = aspectData.ratio || 1;
+        const w = Math.round(baseHeight * aspect);
+        const h = baseHeight;
 
-      collage.innerHTML = html;
+        const cardEl = document.createElement('div');
+        cardEl.className = 'fs-ref-card';
+        cardEl.dataset.id = item.id;
+        cardEl.style.zIndex = 10 + idx;
+
+        const imgEl = document.createElement('img');
+        imgEl.src = item.image;
+        imgEl.alt = 'референс';
+        cardEl.appendChild(imgEl);
+
+        // Ручки изменения размера по 4 углам
+        ['br', 'bl', 'tr', 'tl'].forEach(pos => {
+          const handle = document.createElement('div');
+          handle.className = `fs-resize-handle ${pos}`;
+          handle.dataset.handle = pos;
+          cardEl.appendChild(handle);
+        });
+
+        const cardObj = {
+          id: item.id,
+          x: currentX,
+          y: 0,
+          width: w,
+          height: h,
+          aspect: aspect,
+          el: cardEl
+        };
+
+        pureRefState.cards.push(cardObj);
+        applyCardStyles(cardObj);
+        world.appendChild(cardEl);
+
+        currentX += w + gap;
+      });
+
       modal.classList.add('open');
-    }
-
-    function handleFsCellClick(imageSrc, event) {
-      event.stopPropagation();
-      openLightbox(imageSrc, event);
+      initPureRefEvents();
+      resetPureRefView();
     }
 
     function closeFullscreenBoard(event) {
       if (event) event.stopPropagation();
       const modal = document.getElementById('fullscreenBoardModal');
+      modal.classList.remove('open');
+    }
+
+    // Инициализация обработчиков мыши и тача для PureRef
+    let pureRefEventsInitialized = false;
+    function initPureRefEvents() {
+      if (pureRefEventsInitialized) return;
+      pureRefEventsInitialized = true;
+
+      const viewport = document.getElementById('pureRefViewport');
+      let activePointers = new Map();
+      let initialPinchDistance = null;
+      let initialPinchZoom = null;
+
+      // Закрытие по Escape
+      window.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('fullscreenBoardModal');
+        if (e.key === 'Escape' && modal.classList.contains('open')) {
+          closeFullscreenBoard();
+        }
+      });
+
+      // Зум колёсиком мыши к точке курсора (PureRef zoom)
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+        const oldZoom = pureRefState.zoom;
+        const newZoom = Math.min(Math.max(oldZoom * zoomFactor, 0.1), 5);
+
+        // Зум относительно точки курсора
+        pureRefState.panX = mouseX - (mouseX - pureRefState.panX) * (newZoom / oldZoom);
+        pureRefState.panY = mouseY - (mouseY - pureRefState.panY) * (newZoom / oldZoom);
+        pureRefState.zoom = newZoom;
+
+        updatePureRefWorldTransform();
+      }, { passive: false });
+
+      // Запрет контекстного меню на вьюпорте (ПКМ используется для панорамирования)
+      viewport.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      // PointerDown
+      viewport.addEventListener('pointerdown', (e) => {
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        // Проверяем, кликнули ли по ручке изменения размера
+        const handleEl = e.target.closest('.fs-resize-handle');
+        if (handleEl) {
+          e.stopPropagation();
+          const cardEl = handleEl.closest('.fs-ref-card');
+          const card = pureRefState.cards.find(c => c.id === cardEl.dataset.id);
+          if (card) {
+            pureRefState.topZIndex++;
+            card.el.style.zIndex = pureRefState.topZIndex;
+            pureRefState.selectedCardId = card.id;
+            updateCardsSelection();
+
+            pureRefState.activeDrag = {
+              type: 'resize',
+              cardId: card.id,
+              handle: handleEl.dataset.handle,
+              startPointerX: e.clientX,
+              startPointerY: e.clientY,
+              startX: card.x,
+              startY: card.y,
+              startW: card.width,
+              startH: card.height,
+              aspect: card.aspect
+            };
+            handleEl.setPointerCapture(e.pointerId);
+          }
+          return;
+        }
+
+        // Проверяем, кликнули ли по самой карточке референса
+        const cardEl = e.target.closest('.fs-ref-card');
+        if (cardEl && e.button !== 2) { // ЛКМ или тач по карточке
+          e.stopPropagation();
+          const card = pureRefState.cards.find(c => c.id === cardEl.dataset.id);
+          if (card) {
+            pureRefState.topZIndex++;
+            card.el.style.zIndex = pureRefState.topZIndex;
+            pureRefState.selectedCardId = card.id;
+            updateCardsSelection();
+
+            pureRefState.activeDrag = {
+              type: 'move',
+              cardId: card.id,
+              startPointerX: e.clientX,
+              startPointerY: e.clientY,
+              startX: card.x,
+              startY: card.y
+            };
+            cardEl.setPointerCapture(e.pointerId);
+          }
+          return;
+        }
+
+        // Клик по фону (или ПКМ / средняя кнопка мыши) -> панорамирование холста
+        if (activePointers.size === 1) {
+          pureRefState.isPanning = true;
+          pureRefState.startPanX = e.clientX - pureRefState.panX;
+          pureRefState.startPanY = e.clientY - pureRefState.panY;
+          pureRefState.selectedCardId = null;
+          updateCardsSelection();
+          viewport.setPointerCapture(e.pointerId);
+        } else if (activePointers.size === 2) {
+          // Мультитач pinch-to-zoom на мобильных устройствах
+          pureRefState.isPanning = false;
+          pureRefState.activeDrag = null;
+          const pts = Array.from(activePointers.values());
+          initialPinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+          initialPinchZoom = pureRefState.zoom;
+        }
+      });
+
+      // PointerMove
+      viewport.addEventListener('pointermove', (e) => {
+        if (activePointers.has(e.pointerId)) {
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+
+        // Обработка двухпальцевого масштабирования (pinch)
+        if (activePointers.size === 2 && initialPinchDistance) {
+          const pts = Array.from(activePointers.values());
+          const curDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+          const midX = (pts[0].x + pts[1].x) / 2;
+          const midY = (pts[0].y + pts[1].y) / 2;
+
+          const ratio = curDist / initialPinchDistance;
+          const newZoom = Math.min(Math.max(initialPinchZoom * ratio, 0.1), 5);
+          const oldZoom = pureRefState.zoom;
+
+          pureRefState.panX = midX - (midX - pureRefState.panX) * (newZoom / oldZoom);
+          pureRefState.panY = midY - (midY - pureRefState.panY) * (newZoom / oldZoom);
+          pureRefState.zoom = newZoom;
+
+          updatePureRefWorldTransform();
+          return;
+        }
+
+        // Перетаскивание или изменение размера отдельного референса
+        if (pureRefState.activeDrag) {
+          const drag = pureRefState.activeDrag;
+          const card = pureRefState.cards.find(c => c.id === drag.cardId);
+          if (!card) return;
+
+          const dx = (e.clientX - drag.startPointerX) / pureRefState.zoom;
+          const dy = (e.clientY - drag.startPointerY) / pureRefState.zoom;
+
+          if (drag.type === 'move') {
+            card.x = Math.round(drag.startX + dx);
+            card.y = Math.round(drag.startY + dy);
+            applyCardStyles(card);
+          } else if (drag.type === 'resize') {
+            // Сохраняем пропорции картинки при изменении размера
+            const handle = drag.handle;
+            let newW = drag.startW;
+
+            if (handle === 'br') {
+              newW = Math.max(80, drag.startW + dx);
+              card.width = Math.round(newW);
+              card.height = Math.round(newW / drag.aspect);
+            } else if (handle === 'tr') {
+              newW = Math.max(80, drag.startW + dx);
+              const newH = Math.round(newW / drag.aspect);
+              card.y = Math.round(drag.startY + (drag.startH - newH));
+              card.width = Math.round(newW);
+              card.height = newH;
+            } else if (handle === 'bl') {
+              newW = Math.max(80, drag.startW - dx);
+              const newH = Math.round(newW / drag.aspect);
+              card.x = Math.round(drag.startX + (drag.startW - newW));
+              card.width = Math.round(newW);
+              card.height = newH;
+            } else if (handle === 'tl') {
+              newW = Math.max(80, drag.startW - dx);
+              const newH = Math.round(newW / drag.aspect);
+              card.x = Math.round(drag.startX + (drag.startW - newW));
+              card.y = Math.round(drag.startY + (drag.startH - newH));
+              card.width = Math.round(newW);
+              card.height = newH;
+            }
+            applyCardStyles(card);
+          }
+          return;
+        }
+
+        // Панорамирование всего холста
+        if (pureRefState.isPanning) {
+          pureRefState.panX = e.clientX - pureRefState.startPanX;
+          pureRefState.panY = e.clientY - pureRefState.startPanY;
+          updatePureRefWorldTransform();
+        }
+      });
+
+      // PointerUp / Cancel
+      const endPointer = (e) => {
+        activePointers.delete(e.pointerId);
+        if (activePointers.size < 2) {
+          initialPinchDistance = null;
+          initialPinchZoom = null;
+        }
+        if (activePointers.size === 0) {
+          pureRefState.isPanning = false;
+          pureRefState.activeDrag = null;
+        }
+      };
+
+      viewport.addEventListener('pointerup', endPointer);
+      viewport.addEventListener('pointercancel', endPointer);
+    }
+
+    function updateCardsSelection() {
+      pureRefState.cards.forEach(c => {
+        if (c.id === pureRefState.selectedCardId) {
+          c.el.classList.add('selected');
+        } else {
+          c.el.classList.remove('selected');
+        }
+      });
+    }
       modal.classList.remove('open');
     }
 

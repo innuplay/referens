@@ -1053,9 +1053,35 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .search-close-btn:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.15);
+    /* Быстрые фильтры / категории в окне поиска */
+    .search-tags-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 0 4px 10px 4px;
+      margin-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .search-tags-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .search-chip-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      padding: 5px 11px;
+      border-radius: 14px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .search-chip-btn:hover, .search-chip-btn.active {
+      background: rgba(251, 191, 36, 0.2);
+      border-color: var(--gold);
+      color: #fbbf24;
     }
     .search-results-grid {
       flex: 1;
@@ -1379,6 +1405,18 @@
           </button>
         </div>
         <button class="search-close-btn" onclick="closeSearchModal()">Закрыть</button>
+      </div>
+
+      <!-- Быстрые категории/теги для мгновенного поиска в 1 клик -->
+      <div class="search-tags-bar" id="searchTagsBar">
+        <button class="search-chip-btn" onclick="quickSearch('мультик')">🎨 Мультик / Арт</button>
+        <button class="search-chip-btn" onclick="quickSearch('эмоция')">😊 Эмоция</button>
+        <button class="search-chip-btn" onclick="quickSearch('поза')">🧍 Поза</button>
+        <button class="search-chip-btn" onclick="quickSearch('персонаж')">👤 Образ / Персонаж</button>
+        <button class="search-chip-btn" onclick="quickSearch('костюм')">👗 Костюм / Одежда</button>
+        <button class="search-chip-btn" onclick="quickSearch('пейзаж')">🌄 Пейзаж / Локация</button>
+        <button class="search-chip-btn" onclick="quickSearch('киберпанк')">⚡ Киберпанк</button>
+        <button class="search-chip-btn" onclick="quickSearch('аниме')">🌸 Аниме</button>
       </div>
 
       <div class="search-results-grid" id="searchResultsGrid">
@@ -2684,6 +2722,14 @@
       modal.classList.remove('open');
     }
 
+    function quickSearch(tag) {
+      const input = document.getElementById('searchInput');
+      if (input) {
+        input.value = tag;
+        executeSearch();
+      }
+    }
+
     async function executeSearch() {
       const input = document.getElementById('searchInput');
       const query = (input.value || '').trim();
@@ -2697,8 +2743,8 @@
       grid.innerHTML = '<div class="search-empty-state"><span>Ищем изображения...</span></div>';
 
       try {
-        // 1. Переводим запрос на английский язык, если введён на русском (международные базы тегированы на английском)
-        let englishQuery = query.trim();
+        // Подготовим варианты запроса: исходный на русском + перевод на английский для боор
+        let englishQuery = query;
         if (/[а-яё]/i.test(query)) {
           try {
             const trRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(query)}`);
@@ -2715,16 +2761,26 @@
 
         const tag = (englishQuery || query).toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').trim();
 
-        // 2. Параллельные запросы к открытым базам артов, концептов и иллюстраций:
-        // - Safebooru (аниме, 2D арт, позы, концепт-арт)
-        // - TBIB (The Big ImageBoard - Danbooru mirror с огромной базой артов высокого разрешения)
-        // - Konachan (высокодетализированные арты, обои и окружение)
+        // Популярные синонимы тегов для артов
+        const tagAliases = {
+          'cartoon': ['cartoon', 'animation', 'chibi', 'comic'],
+          'multik': ['cartoon', 'animation'],
+          'emotion': ['expression', 'smile', 'crying', 'angry'],
+          'pose': ['pose', 'dynamic_pose', 'sitting', 'standing'],
+          'character': ['1girl', '1boy', 'original'],
+          'costume': ['dress', 'outfit', 'uniform', 'costume'],
+          'landscape': ['scenery', 'landscape', 'outdoors', 'city'],
+          'scenery': ['scenery', 'outdoors', 'background'],
+          'anime': ['anime', 'japanese', 'manga']
+        };
+
+        const activeTags = tagAliases[tag] ? tagAliases[tag] : [tag];
         const fetchPromises = [];
 
-        // Safebooru
-        if (tag) {
+        // 1. Поиск в Safebooru по основному тегу и синонимам
+        activeTags.slice(0, 2).forEach(t => {
           fetchPromises.push(
-            fetch(`https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&limit=30&tags=${encodeURIComponent(tag)}`)
+            fetch(`https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&limit=25&tags=${encodeURIComponent(t)}`)
               .then(r => r.json())
               .then(items => {
                 if (!Array.isArray(items)) return [];
@@ -2736,35 +2792,52 @@
               })
               .catch(() => [])
           );
+        });
 
-          // TBIB (The Big ImageBoard / Danbooru archive)
-          fetchPromises.push(
-            fetch(`https://tbib.org/index.php?page=dapi&s=post&q=index&json=1&limit=30&tags=${encodeURIComponent(tag)}`)
-              .then(r => r.json())
-              .then(items => {
-                if (!Array.isArray(items)) return [];
-                return items.map(b => {
-                  const dir = b.directory;
-                  const img = b.image;
-                  const thumb = `https://tbib.org/thumbnails/${dir}/thumbnail_${img}`;
-                  const full = `https://tbib.org/images/${dir}/${img}`;
-                  return { thumb, full, title: b.tags || 'арт' };
-                });
-              })
-              .catch(() => [])
-          );
+        // 2. Поиск в глобальном Wikimedia Commons (отлично для реальных фото, иллюстраций и мультиков на русском и английском)
+        fetchPromises.push(
+          fetch(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=25&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`)
+            .then(r => r.json())
+            .then(data => {
+              if (!data || !data.query || !data.query.pages) return [];
+              const pages = Object.values(data.query.pages);
+              const list = [];
+              for (const p of pages) {
+                if (p.imageinfo && p.imageinfo[0]) {
+                  const info = p.imageinfo[0];
+                  const mime = (info.mime || '').toLowerCase();
+                  if (mime.includes('image') && !mime.includes('svg')) {
+                    const thumb = info.thumburl || info.url;
+                    const full = info.url || thumb;
+                    list.push({ thumb, full, title: p.title || 'референс' });
+                  }
+                }
+              }
+              return list;
+            })
+            .catch(() => [])
+        );
 
-          // Konachan
+        if (englishQuery !== query) {
           fetchPromises.push(
-            fetch(`https://konachan.net/post.json?tags=${encodeURIComponent(tag)}&limit=30`)
+            fetch(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(englishQuery)}&gsrnamespace=6&gsrlimit=25&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`)
               .then(r => r.json())
-              .then(items => {
-                if (!Array.isArray(items)) return [];
-                return items.map(b => ({
-                  thumb: b.preview_url || b.sample_url || b.file_url,
-                  full: b.sample_url || b.file_url || b.jpeg_url || b.preview_url,
-                  title: b.tags || 'арт'
-                }));
+              .then(data => {
+                if (!data || !data.query || !data.query.pages) return [];
+                const pages = Object.values(data.query.pages);
+                const list = [];
+                for (const p of pages) {
+                  if (p.imageinfo && p.imageinfo[0]) {
+                    const info = p.imageinfo[0];
+                    const mime = (info.mime || '').toLowerCase();
+                    if (mime.includes('image') && !mime.includes('svg')) {
+                      const thumb = info.thumburl || info.url;
+                      const full = info.url || thumb;
+                      list.push({ thumb, full, title: p.title || 'референс' });
+                    }
+                  }
+                }
+                return list;
               })
               .catch(() => [])
           );

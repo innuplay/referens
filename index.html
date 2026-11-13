@@ -1063,10 +1063,11 @@
       color: #000;
     }
 
-    /* Выпадающий список выбора категории из плюса */
+    /* Выпадающий список выбора категории из плюса (всегда открывается вниз от плюса) */
     .search-cat-picker-menu {
       position: absolute;
-      right: 6px;
+      top: calc(100% + 4px);
+      right: 4px;
       background: #0d0f16;
       border: 1px solid var(--gold);
       border-radius: 10px;
@@ -1074,16 +1075,10 @@
       display: flex;
       flex-direction: column;
       gap: 3px;
-      z-index: 50;
+      z-index: 100;
       box-shadow: 0 10px 30px rgba(0,0,0,0.95);
       min-width: 110px;
       animation: menuPop 0.15s ease-out;
-    }
-    .search-cat-picker-menu.pos-above {
-      bottom: 40px;
-    }
-    .search-cat-picker-menu.pos-below {
-      top: 40px;
     }
     @keyframes menuPop {
       from { opacity: 0; transform: scale(0.9); }
@@ -2526,16 +2521,6 @@
             // Закрываем все другие открытые меню в поиске
             document.querySelectorAll('.search-cat-picker-menu').forEach(m => m.style.display = 'none');
             if (!isOpen) {
-              // Проверяем, сколько места сверху в контейнере
-              const rect = item.getBoundingClientRect();
-              const gridRect = grid.getBoundingClientRect();
-              if (rect.top - gridRect.top < 180) {
-                catMenu.classList.remove('pos-above');
-                catMenu.classList.add('pos-below');
-              } else {
-                catMenu.classList.remove('pos-below');
-                catMenu.classList.add('pos-above');
-              }
               catMenu.style.display = 'flex';
             }
           };

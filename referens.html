@@ -112,6 +112,15 @@
       gap: 14px;
     }
 
+    /* Когда открыта вкладка "♥" (избранное) - скрываем нижнюю/правую доску референсов */
+    .main-workspace.favorites-mode {
+      grid-template-columns: 1fr !important;
+      grid-template-rows: 1fr !important;
+    }
+    .main-workspace.favorites-mode .board-panel {
+      display: none !important;
+    }
+
     /* ==========================================================
        ЛЕВАЯ ПАНЕЛЬ: Вкладки альбома (фото, эмоция, одежда, предметы, образы)
        ========================================================== */
@@ -291,15 +300,23 @@
       border-radius: 3px;
     }
 
-    .photo-card {
-      position: relative;
-      aspect-ratio: 1 / 1;
-      border-radius: var(--radius-md);
-      overflow: hidden;
+    .fav-composition-preview {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 2px;
+      width: 100%;
+      height: 100%;
       background: #090a0f;
-      border: 2px solid transparent;
-      cursor: pointer;
-      transition: all 0.15s ease;
+      padding: 2px;
+      box-sizing: border-box;
+    }
+    .fav-composition-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 4px;
     }
     .photo-card:hover {
       border-color: rgba(255, 255, 255, 0.25);
@@ -1477,6 +1494,14 @@
 
     async function switchTab(tabId) {
       activeTabId = tabId;
+      const workspace = document.querySelector('.main-workspace');
+      if (workspace) {
+        if (activeTabId === 'favorites') {
+          workspace.classList.add('favorites-mode');
+        } else {
+          workspace.classList.remove('favorites-mode');
+        }
+      }
       await renderTabs();
       await renderAlbumGrid();
     }

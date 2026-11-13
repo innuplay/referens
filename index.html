@@ -874,8 +874,18 @@
       }
       .main-workspace {
         grid-template-columns: 1fr;
-        grid-template-rows: 0.85fr 1.35fr; /* Удлиняем доску референсов вниз, отдавая ей больше пространства */
+        grid-template-rows: 1fr 1fr; /* Возвращаем верхнюю область альбома ровно такого же удобного размера как была */
         gap: 8px;
+      }
+      .board-panel {
+        min-height: 0;
+        flex: 1;
+      }
+      .board-canvas {
+        grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+        gap: 6px;
+        padding: 6px;
+        align-content: start;
       }
       .album-tabs-bar {
         padding: 6px 8px;

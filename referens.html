@@ -652,14 +652,14 @@
       display: block;
     }
 
-    /* Панель управления PureRef (внизу экрана) */
+    /* Панель управления PureRef (внизу экрана, справа в углу) */
     .fs-pureref-bar {
       position: absolute;
       bottom: max(20px, env(safe-area-inset-bottom, 20px));
-      left: 0;
-      right: 0;
+      right: max(20px, env(safe-area-inset-right, 20px));
+      left: auto;
       display: flex;
-      justify-content: center;
+      justify-content: flex-end;
       align-items: center;
       z-index: 10005;
       pointer-events: none;
@@ -849,8 +849,9 @@
     .lightbox-close {
       position: absolute;
       bottom: max(22px, env(safe-area-inset-bottom, 22px));
-      left: 50%;
-      transform: translateX(-50%);
+      right: max(20px, env(safe-area-inset-right, 20px));
+      left: auto;
+      transform: none;
       background: rgba(0, 0, 0, 0.75);
       border: 1px solid rgba(255, 255, 255, 0.25);
       color: #fff;

@@ -1320,7 +1320,7 @@
       <section class="board-panel">
         <div class="board-header">
           <div class="board-title-group">
-            <div class="board-title-text">Доска референсов</div>
+            <div class="board-title-text">Доска</div>
           </div>
           <div class="board-controls">
             <button class="board-btn danger" onclick="clearBoard()">Очистить</button>
@@ -1611,11 +1611,7 @@
       if (badge) badge.textContent = `${boardItemIds.length} на доске`;
 
       if (boardItemIds.length === 0) {
-        canvas.innerHTML = `
-          <div class="empty-board-notice">
-            <h3>Пусто</h3>
-          </div>
-        `;
+        canvas.innerHTML = '';
         return;
       }
 

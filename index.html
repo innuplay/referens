@@ -652,22 +652,19 @@
       display: block;
     }
 
-    /* Панель управления PureRef (внизу экрана, справа в углу) */
-    .fs-pureref-bar {
+    /* Кнопки управления PureRef внизу */
+    .fs-pureref-save-btn {
+      position: absolute;
+      bottom: max(20px, env(safe-area-inset-bottom, 20px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10005;
+    }
+    .fs-pureref-back-btn {
       position: absolute;
       bottom: max(20px, env(safe-area-inset-bottom, 20px));
       right: max(20px, env(safe-area-inset-right, 20px));
-      left: auto;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
       z-index: 10005;
-      pointer-events: none;
-    }
-    .fs-pureref-actions {
-      display: flex;
-      gap: 8px;
-      pointer-events: auto;
     }
     .fs-tool-btn {
       background: rgba(0, 0, 0, 0.75);
@@ -1338,13 +1335,9 @@
 
   <!-- ПОЛНОЭКРАННАЯ ОБЪЕДИНЕННАЯ ДОСКА В СТИЛЕ PUREREF -->
   <div class="fullscreen-board-modal" id="fullscreenBoardModal">
-    <!-- Верхняя панель PureRef (Сохранить, Назад) -->
-    <div class="fs-pureref-bar">
-      <div class="fs-pureref-actions">
-        <button type="button" class="fs-tool-btn save-btn" onclick="savePureRefComposition()" title="Сохранить скрепленные картинки в избранное (♥)">Сохранить</button>
-        <button type="button" class="fs-tool-btn" onclick="closeFullscreenBoard(event)" ontouchend="closeFullscreenBoard(event)" title="Вернуться назад (Esc)">Назад</button>
-      </div>
-    </div>
+    <!-- Кнопки PureRef (Сохранить по центру внизу, Назад в углу) -->
+    <button type="button" class="fs-tool-btn save-btn fs-pureref-save-btn" onclick="savePureRefComposition()" title="Сохранить скрепленные картинки в избранное (♥)">Сохранить</button>
+    <button type="button" class="fs-tool-btn fs-pureref-back-btn" onclick="closeFullscreenBoard(event)" ontouchend="closeFullscreenBoard(event)" title="Вернуться назад (Esc)">Назад</button>
 
     <!-- Интерактивный бесконечный вьюпорт PureRef -->
     <div class="fs-pureref-viewport" id="pureRefViewport">

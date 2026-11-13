@@ -960,7 +960,7 @@
         </div>
 
         <div class="tab-header-info">
-          <div class="tab-title-text" id="activeTabTitle">фото</div>
+          <div class="tab-title-text" id="activeTabTitle">эмоция</div>
           <div class="tab-actions">
             <button class="plus-paste-btn" onclick="pasteFromClipboard()" title="Вставить скопированное фото (+)">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -1033,22 +1033,18 @@
   </div>
 
   <script>
-    /* Категории альбома:
-       - people -> «фото»
-       - emotion -> «эмоция»
-       - spaces -> «одежда»
-       - items -> «предметы»
-       - creatures -> «образы»
+    /* Категории альбома в новом порядке:
+       эмоция -> образы -> объект -> предмет -> детали
     */
     const CATEGORIES = {
-      people: { id: 'people', title: 'фото' },
       emotion: { id: 'emotion', title: 'эмоция' },
-      spaces: { id: 'spaces', title: 'одежда' },
-      items: { id: 'items', title: 'предметы' },
-      creatures: { id: 'creatures', title: 'образы' }
+      creatures: { id: 'creatures', title: 'образы' },
+      people: { id: 'people', title: 'объект' },
+      items: { id: 'items', title: 'предмет' },
+      spaces: { id: 'spaces', title: 'детали' }
     };
 
-    let activeTabId = 'people';
+    let activeTabId = 'emotion';
 
     // База данных IndexedDB (VisualBoardDB v3)
     const DB_NAME = 'VisualBoardDB';

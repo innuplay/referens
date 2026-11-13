@@ -2022,7 +2022,7 @@
         return;
       }
 
-      grid.innerHTML = '<div class="search-empty-state"><span>Ищем в арт-базе...</span></div>';
+      grid.innerHTML = '<div class="search-empty-state"><span>Ищем изображения...</span></div>';
 
       try {
         let englishQuery = query;
@@ -2039,33 +2039,47 @@
           }
         }
 
-        // Запрос к Wallhaven — мировой арт-базе высококачественных референсов (арты, персонажи, концепты, стили)
-        const wallhavenUrl = `https://wallhaven.cc/api/v1/search?q=${encodeURIComponent(englishQuery)}&categories=111&purity=100&sorting=relevance`;
-        const res = await fetch(wallhavenUrl);
-        const data = await res.json();
-        const results = (data && Array.isArray(data.data)) ? data.data : [];
+        // Запрос к проверенной базе Wikimedia Commons (CORS origin=* гарантирован) с фильтром по качественным растровым артам и фото
+        const searchQuery = 'filetype:bitmap ' + englishQuery;
+        const apiUrl = `https://en.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(searchQuery)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`;
 
-        if (results.length === 0) {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        let pages = (data.query && data.query.pages) ? Object.values(data.query.pages) : [];
+
+        // Фильтруем только полноценные растровые картинки (jpg, png, webp)
+        const validImages = [];
+        for (const p of pages) {
+          if (p.imageinfo && p.imageinfo[0]) {
+            const info = p.imageinfo[0];
+            const mime = (info.mime || '').toLowerCase();
+            const title = (p.title || '').toLowerCase();
+            if (mime.includes('image') && !mime.includes('svg') && !title.endsWith('.pdf')) {
+              const thumbUrl = info.thumburl || info.url;
+              const fullUrl = info.url || thumbUrl;
+              validImages.push({ thumb: thumbUrl, full: fullUrl, title: p.title });
+            }
+          }
+        }
+
+        if (validImages.length === 0) {
           grid.innerHTML = '<div class="search-empty-state"><span>Ничего не найдено. Попробуйте другое слово</span></div>';
           return;
         }
 
         grid.innerHTML = '';
-        results.slice(0, 24).forEach(itemData => {
-          const thumbUrl = itemData.thumbs ? (itemData.thumbs.large || itemData.thumbs.small) : itemData.path;
-          const fullUrl = itemData.path || thumbUrl;
-
+        validImages.forEach(imgData => {
           const item = document.createElement('div');
           item.className = 'search-result-item';
           item.title = 'Нажмите, чтобы добавить в «' + CATEGORIES[activeTabId].title + '»';
           item.innerHTML = `
-            <img src="${thumbUrl}" alt="референс" loading="lazy" />
+            <img src="${imgData.thumb}" alt="референс" loading="lazy" />
             <div class="search-result-add-badge">+</div>
           `;
           item.onclick = async () => {
             try {
               showToast('Сохраняем в альбом...');
-              const opt = await optimizeImageUrl(fullUrl);
+              const opt = await optimizeImageUrl(imgData.full);
               await addItemToDB(activeTabId, opt);
               await renderTabs();
               await renderAlbumGrid();
@@ -2080,7 +2094,7 @@
 
       } catch (err) {
         console.error('Search error:', err);
-        grid.innerHTML = '<div class="search-empty-state"><span>Ошибка при поиске. Проверьте интернет-соединение</span></div>';
+        grid.innerHTML = '<div class="search-empty-state"><span>Ошибка при поиске. Проверьте запрос</span></div>';
       }
     }
 

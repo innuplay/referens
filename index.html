@@ -161,11 +161,16 @@
       background: rgba(255, 255, 255, 0.08);
       color: #fff;
     }
-    .tab-btn.active {
-      background: rgba(251, 191, 36, 0.12);
-      border-color: #fbbf24;
-      color: #fbbf24;
-      box-shadow: 0 2px 10px rgba(251, 191, 36, 0.25);
+    .tab-btn.tab-favorites {
+      color: #f43f5e;
+      font-size: 1.05rem;
+      padding: 5px 12px;
+    }
+    .tab-btn.tab-favorites.active {
+      border-color: #f43f5e;
+      color: #f43f5e;
+      background: rgba(244, 63, 94, 0.15);
+      box-shadow: 0 2px 10px rgba(244, 63, 94, 0.25);
     }
     .tab-count {
       font-size: 0.72rem;
@@ -640,9 +645,15 @@
       gap: 5px;
       transition: all 0.15s ease;
     }
-    .fs-tool-btn:hover, .fs-tool-btn:active {
+    .fs-tool-btn.save-btn {
+      background: rgba(251, 191, 36, 0.2);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .fs-tool-btn.save-btn:hover, .fs-tool-btn.save-btn:active {
       background: var(--gold);
       color: #000;
+    }
       border-color: var(--gold);
     }
     .fs-floating-close {
@@ -1270,11 +1281,12 @@
 
   <!-- ПОЛНОЭКРАННАЯ ОБЪЕДИНЕННАЯ ДОСКА В СТИЛЕ PUREREF -->
   <div class="fullscreen-board-modal" id="fullscreenBoardModal">
-    <!-- Верхняя панель PureRef (только Сброс, Упорядочить, Назад) -->
+    <!-- Верхняя панель PureRef (Сброс, Упорядочить, Сохранить, Назад) -->
     <div class="fs-pureref-bar">
       <div class="fs-pureref-actions">
         <button type="button" class="fs-tool-btn" onclick="resetPureRefView()" title="Сбросить масштаб и положение">Сброс</button>
         <button type="button" class="fs-tool-btn" onclick="autoLayoutPureRef()" title="Аккуратно расставить в ряд">Упорядочить</button>
+        <button type="button" class="fs-tool-btn save-btn" onclick="savePureRefComposition()" title="Сохранить скрепленные картинки в избранное (♥)">Сохранить</button>
         <button type="button" class="fs-tool-btn" onclick="closeFullscreenBoard(event)" ontouchstart="closeFullscreenBoard(event)" title="Вернуться назад (Esc)">Назад</button>
       </div>
     </div>
@@ -1336,14 +1348,15 @@
 
   <script>
     /* Категории альбома в новом порядке:
-       эмоция -> образы -> объект -> предмет -> детали
+       эмоция -> образы -> объект -> предмет -> детали -> favorites (♥)
     */
     const CATEGORIES = {
       emotion: { id: 'emotion', title: 'эмоция' },
       creatures: { id: 'creatures', title: 'образы' },
       people: { id: 'people', title: 'объект' },
       items: { id: 'items', title: 'предмет' },
-      spaces: { id: 'spaces', title: 'детали' }
+      spaces: { id: 'spaces', title: 'детали' },
+      favorites: { id: 'favorites', title: '♥' }
     };
 
     let activeTabId = 'emotion';
@@ -1450,8 +1463,9 @@
       for (const key of Object.keys(CATEGORIES)) {
         const cat = CATEGORIES[key];
         const isActive = (key === activeTabId);
+        const isFav = (key === 'favorites');
         html += `
-          <button class="tab-btn ${isActive ? 'active' : ''}" onclick="switchTab('${key}')">
+          <button class="tab-btn ${isActive ? 'active' : ''} ${isFav ? 'tab-favorites' : ''}" onclick="switchTab('${key}')" title="${isFav ? 'Сохраненные композиции' : cat.title}">
             <span>${cat.title}</span>
           </button>
         `;
@@ -1649,24 +1663,200 @@
     function autoLayoutPureRef() {
       if (pureRefState.cards.length === 0) return;
       const count = pureRefState.cards.length;
+      const isPortrait = window.innerHeight > window.innerWidth;
 
-      // Базовая высота карточки
-      const baseH = 340;
-      const gap = 16;
-      let currentX = 0;
+      // Крупный базовый размер для каждого изображения
+      const baseH = isPortrait ? 400 : 480;
+      const gap = 18;
 
-      pureRefState.cards.forEach((c) => {
-        const w = Math.round(baseH * c.aspect);
-        c.width = w;
-        c.height = baseH;
-        c.x = currentX;
-        c.y = 0;
-        currentX += w + gap;
-        applyCardStyles(c);
-      });
+      if (count <= 2) {
+        // 1-2 картинки: в один ряд или колонку крупно
+        let currentX = 0;
+        let currentY = 0;
+        pureRefState.cards.forEach((c) => {
+          const w = Math.round(baseH * c.aspect);
+          c.width = w;
+          c.height = baseH;
+          if (isPortrait && count === 2) {
+            c.x = 0;
+            c.y = currentY;
+            currentY += baseH + gap;
+          } else {
+            c.x = currentX;
+            c.y = 0;
+            currentX += w + gap;
+          }
+          applyCardStyles(c);
+        });
+      } else if (count === 3) {
+        // 3 картинки: верх 1-2, низ 1-2
+        if (isPortrait) {
+          // Верхняя 1 крупная, снизу 2 рядом
+          const topCard = pureRefState.cards[0];
+          const topH = Math.round(baseH * 1.1);
+          topCard.width = Math.round(topH * topCard.aspect);
+          topCard.height = topH;
+          topCard.x = 0;
+          topCard.y = 0;
+          applyCardStyles(topCard);
+
+          let btmX = 0;
+          for (let i = 1; i < 3; i++) {
+            const c = pureRefState.cards[i];
+            const w = Math.round(baseH * c.aspect);
+            c.width = w;
+            c.height = baseH;
+            c.x = btmX;
+            c.y = topH + gap;
+            btmX += w + gap;
+            applyCardStyles(c);
+          }
+        } else {
+          // В альбомном режиме: все 3 крупно в ряд
+          let currentX = 0;
+          pureRefState.cards.forEach((c) => {
+            const w = Math.round(baseH * c.aspect);
+            c.width = w;
+            c.height = baseH;
+            c.x = currentX;
+            c.y = 0;
+            currentX += w + gap;
+            applyCardStyles(c);
+          });
+        }
+      } else if (count === 4) {
+        // Сетка 2x2 крупно и аккуратно
+        const row1Cards = [pureRefState.cards[0], pureRefState.cards[1]];
+        const row2Cards = [pureRefState.cards[2], pureRefState.cards[3]];
+
+        let r1X = 0;
+        row1Cards.forEach(c => {
+          const w = Math.round(baseH * c.aspect);
+          c.width = w;
+          c.height = baseH;
+          c.x = r1X;
+          c.y = 0;
+          r1X += w + gap;
+          applyCardStyles(c);
+        });
+
+        let r2X = 0;
+        row2Cards.forEach(c => {
+          const w = Math.round(baseH * c.aspect);
+          c.width = w;
+          c.height = baseH;
+          c.x = r2X;
+          c.y = baseH + gap;
+          r2X += w + gap;
+          applyCardStyles(c);
+        });
+      } else {
+        // 5 картинок: верхний ряд (2) и нижний ряд (3)
+        const row1Count = isPortrait ? 2 : 3;
+        const row1 = pureRefState.cards.slice(0, row1Count);
+        const row2 = pureRefState.cards.slice(row1Count);
+
+        let r1X = 0;
+        row1.forEach(c => {
+          const w = Math.round(baseH * c.aspect);
+          c.width = w;
+          c.height = baseH;
+          c.x = r1X;
+          c.y = 0;
+          r1X += w + gap;
+          applyCardStyles(c);
+        });
+
+        let r2X = 0;
+        row2.forEach(c => {
+          const w = Math.round(baseH * c.aspect);
+          c.width = w;
+          c.height = baseH;
+          c.x = r2X;
+          c.y = baseH + gap;
+          r2X += w + gap;
+          applyCardStyles(c);
+        });
+      }
 
       resetPureRefView();
-      showToast('Референсы упорядочены');
+      showToast('Упорядочено');
+    }
+
+    // Сохранение скрепленной композиции в ячейку с сердечком (favorites)
+    async function savePureRefComposition() {
+      if (pureRefState.cards.length === 0) {
+        showToast('На доске нет изображений');
+        return;
+      }
+
+      showToast('Создаем скрепленный референс...');
+
+      try {
+        // 1. Вычисляем точные границы композиции
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        pureRefState.cards.forEach(c => {
+          if (c.x < minX) minX = c.x;
+          if (c.y < minY) minY = c.y;
+          if (c.x + c.width > maxX) maxX = c.x + c.width;
+          if (c.y + c.height > maxY) maxY = c.y + c.height;
+        });
+
+        const compW = (maxX - minX);
+        const compH = (maxY - minY);
+        if (compW <= 0 || compH <= 0) return;
+
+        // 2. Рендерим композицию на Canvas с максимальным качеством
+        const canvas = document.createElement('canvas');
+        // Ограничиваем максимальный размер холста для быстродействия
+        const scale = Math.min(1.5, 2400 / Math.max(compW, compH));
+        canvas.width = Math.round(compW * scale);
+        canvas.height = Math.round(compH * scale);
+        const ctx = canvas.getContext('2d');
+
+        // Тёмный фон как в PureRef
+        ctx.fillStyle = '#0b0c10';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Сортируем карточки по zIndex, чтобы соблюсти порядок наложения
+        const sortedCards = [...pureRefState.cards].sort((a, b) => {
+          const zA = parseInt(a.el.style.zIndex || 0, 10);
+          const zB = parseInt(b.el.style.zIndex || 0, 10);
+          return zA - zB;
+        });
+
+        for (const card of sortedCards) {
+          const img = card.el.querySelector('img');
+          if (img && img.src) {
+            await new Promise((resolve) => {
+              const drawImg = new Image();
+              drawImg.crossOrigin = 'anonymous';
+              drawImg.onload = () => {
+                const drawX = Math.round((card.x - minX) * scale);
+                const drawY = Math.round((card.y - minY) * scale);
+                const drawW = Math.round(card.width * scale);
+                const drawH = Math.round(card.height * scale);
+                ctx.drawImage(drawImg, drawX, drawY, drawW, drawH);
+                resolve();
+              };
+              drawImg.onerror = () => resolve();
+              drawImg.src = img.src;
+            });
+          }
+        }
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+        // 3. Сохраняем в папку "favorites" (ячейка с сердечком ♥)
+        await addItemToDB('favorites', dataUrl);
+        await renderTabs();
+        await renderAlbumGrid();
+
+        showToast('Сохранено в ♥ (избранное)!');
+      } catch (err) {
+        console.error('Error saving composition:', err);
+        showToast('Не удалось сохранить композицию');
+      }
     }
 
     function applyCardStyles(card) {

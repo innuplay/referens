@@ -1,8 +1,9 @@
 {
-  "name": "Referens — Создать персонажа",
+  "name": "Referens — Создай персонажа",
   "short_name": "Referens",
   "description": "Альбом референсов и доска совместного просмотра для создания персонажа",
-  "start_url": "./index.html",
+  "start_url": "/referens/",
+  "scope": "/referens/",
   "display": "standalone",
   "background_color": "#090a0f",
   "theme_color": "#090a0f",

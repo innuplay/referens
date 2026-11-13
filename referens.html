@@ -55,50 +55,39 @@
       gap: 12px;
     }
 
-    /* Верхняя полоса: чистый header с хорошими отступами */
+    /* Верхняя полоса: строго по центру заголовок, справа подсказка, слева кнопка обновить */
     header {
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: relative;
-      padding: 6px 4px 8px;
-      gap: 12px;
-      min-height: 48px;
+      padding: 4px 0 6px;
+      min-height: 44px;
     }
 
     .header-left-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
       z-index: 5;
     }
 
-    .sync-btn {
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 8px;
+    .sync-btn.reload-btn {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 50%;
       background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       color: var(--text-muted);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      justify-content: center;
       transition: all 0.15s ease;
     }
-    .sync-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
-    }
-    .sync-btn.reload-btn {
-      background: rgba(99, 102, 241, 0.15);
-      border-color: rgba(99, 102, 241, 0.35);
-      color: #a5b4fc;
-    }
     .sync-btn.reload-btn:hover {
-      background: rgba(99, 102, 241, 0.3);
+      background: rgba(255, 255, 255, 0.16);
       color: #fff;
     }
 
@@ -118,8 +107,7 @@
       border-radius: 999px;
       letter-spacing: 0.02em;
       white-space: nowrap;
-      z-index: 10;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      pointer-events: none;
     }
 
     .header-hint {
@@ -731,22 +719,28 @@
         height: 100dvh;
       }
       header {
-        min-height: 42px;
-        padding-top: 4px;
-        margin-bottom: 2px;
+        min-height: 40px;
+        padding: 4px 2px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .header-left-actions {
-        gap: 4px;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
       }
-      .sync-btn {
-        padding: 4px 8px;
-        font-size: 0.72rem;
+      .sync-btn.reload-btn {
+        width: 30px;
+        height: 30px;
       }
       .header-center-pill {
         position: static;
         transform: none;
-        font-size: 0.88rem;
-        padding: 4px 14px;
+        font-size: 0.92rem;
+        padding: 5px 16px;
         margin: 0 auto;
       }
       .header-hint {
@@ -798,20 +792,12 @@
 <body>
 
   <div class="app-wrapper">
-    <!-- Верхняя шапка: Заголовок по центру, слева кнопки синхронизации -->
+    /* Верхняя шапка: Заголовок по центру, слева кнопка обновить */
     <header>
       <div class="header-left-actions">
         <button class="sync-btn reload-btn" onclick="window.location.reload(true)" title="Обновить страницу">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-          Обновить
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
         </button>
-        <button class="sync-btn" onclick="exportData()" title="Скачать резервную копию всех фото для переноса">
-          Экспорт
-        </button>
-        <button class="sync-btn" onclick="document.getElementById('importInput').click()" title="Загрузить сохраненные фото">
-          Импорт
-        </button>
-        <input type="file" id="importInput" accept=".json" style="display:none;" onchange="importData(event)">
       </div>
 
       <div class="header-center-pill">создай персонажа</div>

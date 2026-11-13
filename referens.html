@@ -595,13 +595,18 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.94);
+      background: #000000;
       backdrop-filter: blur(8px);
       z-index: 9990;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 30px;
+      padding: 14px;
+      padding-top: max(56px, env(safe-area-inset-top, 56px));
+      padding-bottom: max(14px, env(safe-area-inset-bottom, 14px));
+      padding-left: max(14px, env(safe-area-inset-left, 14px));
+      padding-right: max(14px, env(safe-area-inset-right, 14px));
+      box-sizing: border-box;
       overflow: hidden;
       cursor: zoom-out;
     }
@@ -612,8 +617,8 @@
     /* Кнопка закрытия в правом верхнем углу */
     .fs-floating-close {
       position: absolute;
-      top: 24px;
-      right: 20px;
+      top: max(16px, env(safe-area-inset-top, 16px));
+      right: 18px;
       z-index: 10005;
       background: rgba(0, 0, 0, 0.85);
       border: 1.5px solid rgba(255, 255, 255, 0.35);
@@ -634,18 +639,19 @@
       border-color: var(--gold);
     }
 
-    /* Сетка картинок: аккуратно центрирована, помещается полностью */
+    /* Компактный гармоничный коллаж референсов: чётко видно, без наложения */
     .fs-seamless-collage {
       width: 100%;
       height: 100%;
-      max-width: 95vw;
-      max-height: 90vh;
+      max-width: 100%;
+      max-height: 100%;
       display: grid;
       gap: 10px;
       background: transparent;
       overflow: hidden;
       padding: 0;
       margin: auto;
+      box-sizing: border-box;
       align-items: center;
       justify-items: center;
     }
@@ -657,26 +663,29 @@
       min-width: 0;
       min-height: 0;
       overflow: hidden;
-      background: transparent;
+      background: #090b10;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      box-sizing: border-box;
+      padding: 4px;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .fs-seamless-cell:hover, .fs-seamless-cell:active {
+      border-color: var(--gold);
     }
     .fs-seamless-cell img {
       max-width: 100%;
       max-height: 100%;
-      width: auto;
-      height: auto;
-      object-fit: contain; /* Помещается целиком, не обрезается */
-      border-radius: 6px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Картинка видна полностью, без искажений и без обрезки */
+      border-radius: 8px;
       display: block;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .fs-seamless-cell:hover img {
-      transform: scale(1.03);
-      box-shadow: 0 8px 24px rgba(251, 191, 36, 0.25);
+      pointer-events: none;
     }
 
     /* Одиночный Lightbox */
@@ -1374,6 +1383,10 @@
         boardItemIds.splice(idx, 1);
         showToast('Убрано с доски');
       } else {
+        if (boardItemIds.length >= 5) {
+          showToast('На доске доступно максимум 5 референсов');
+          return;
+        }
         boardItemIds.push(itemId);
         showToast('Помещено на доску!');
       }
@@ -1429,7 +1442,7 @@
     }
 
     // ==========================================================
-    // ВСЕ ОБЪЕКТЫ НА ВЕСЬ ЭКРАН ВСТЫК БЕЗ РАМОК
+    // ВСЕ ОБЪЕКТЫ НА ВЕСЬ ЭКРАН (Компактный коллаж до 5 рефов)
     // ==========================================================
     async function openFullscreenBoard() {
       if (boardItemIds.length === 0) return;
@@ -1437,36 +1450,65 @@
       const modal = document.getElementById('fullscreenBoardModal');
       const collage = document.getElementById('fsCollageContainer');
 
-      const count = boardItemIds.length;
-      let cols = 1;
-      let rows = 1;
+      const count = Math.min(boardItemIds.length, 5);
+      const isPortrait = window.innerHeight > window.innerWidth;
 
+      // Оптимальная раскладка для 1-5 референсов, чтобы всё было крупно и без перекрытия
+      let html = '';
       if (count === 1) {
-        cols = 1; rows = 1;
+        collage.style.gridTemplateColumns = '1fr';
+        collage.style.gridTemplateRows = '1fr';
       } else if (count === 2) {
-        cols = 2; rows = 1;
-      } else if (count <= 4) {
-        cols = 2; rows = 2;
-      } else if (count <= 6) {
-        cols = 3; rows = 2;
-      } else if (count <= 9) {
-        cols = 3; rows = 3;
-      } else if (count <= 12) {
-        cols = 4; rows = 3;
-      } else {
-        cols = Math.ceil(Math.sqrt(count * 1.4));
-        rows = Math.ceil(count / cols);
+        if (isPortrait) {
+          collage.style.gridTemplateColumns = '1fr';
+          collage.style.gridTemplateRows = '1fr 1fr';
+        } else {
+          collage.style.gridTemplateColumns = '1fr 1fr';
+          collage.style.gridTemplateRows = '1fr';
+        }
+      } else if (count === 3) {
+        if (isPortrait) {
+          collage.style.gridTemplateColumns = '1fr';
+          collage.style.gridTemplateRows = 'repeat(3, 1fr)';
+        } else {
+          collage.style.gridTemplateColumns = 'repeat(3, 1fr)';
+          collage.style.gridTemplateRows = '1fr';
+        }
+      } else if (count === 4) {
+        collage.style.gridTemplateColumns = '1fr 1fr';
+        collage.style.gridTemplateRows = '1fr 1fr';
+      } else if (count === 5) {
+        if (isPortrait) {
+          // На вертикальном экране смартфона: верхний ряд 2 фото, нижний ряд 3 фото
+          collage.style.gridTemplateColumns = 'repeat(6, 1fr)';
+          collage.style.gridTemplateRows = '1fr 1fr';
+        } else {
+          // На горизонтальном экране: 3 фото сверху, 2 фото снизу
+          collage.style.gridTemplateColumns = 'repeat(6, 1fr)';
+          collage.style.gridTemplateRows = '1fr 1fr';
+        }
       }
 
-      collage.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-      collage.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-
-      let html = '';
-      for (const id of boardItemIds) {
+      for (let i = 0; i < count; i++) {
+        const id = boardItemIds[i];
         const item = await getItemById(id);
         if (!item) continue;
+
+        let spanStyle = '';
+        if (count === 5) {
+          if (isPortrait) {
+            // 2 фото вверху (по 3 колонки), 3 фото внизу (по 2 колонки)
+            if (i < 2) spanStyle = 'grid-column: span 3;';
+            else spanStyle = 'grid-column: span 2;';
+          } else {
+            // 3 фото вверху (по 2 колонки), 2 фото внизу (по 3 колонки)
+            if (i < 3) spanStyle = 'grid-column: span 2;';
+            else spanStyle = 'grid-column: span 3;';
+          }
+        }
+
         html += `
-          <div class="fs-seamless-cell" onclick="handleFsCellClick('${item.image}', event)">
+          <div class="fs-seamless-cell" style="${spanStyle}" onclick="handleFsCellClick('${item.image}', event)">
             <img src="${item.image}" alt="Объект">
           </div>
         `;

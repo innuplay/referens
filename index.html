@@ -360,7 +360,7 @@
       background: rgba(0, 0, 0, 0.85);
       border: 1px solid var(--gold);
       color: var(--gold);
-      display: flex;
+      display: none; /* скрыт по умолчанию */
       align-items: center;
       justify-content: center;
       transition: all 0.15s ease;
@@ -370,10 +370,14 @@
       pointer-events: auto;
       touch-action: manipulation;
     }
+    .photo-card:hover .photo-pin-badge {
+      display: flex;
+    }
     .photo-pin-badge:active {
       transform: scale(0.92);
     }
     .photo-card.on-board .photo-pin-badge {
+      display: flex;
       background: var(--gold);
       border-color: var(--gold);
       color: #000;
@@ -648,13 +652,14 @@
       display: block;
     }
 
-    /* Верхняя панель управления PureRef */
+    /* Панель управления PureRef (внизу экрана) */
     .fs-pureref-bar {
       position: absolute;
-      top: max(16px, env(safe-area-inset-top, 16px));
-      left: 14px;
+      bottom: max(20px, env(safe-area-inset-bottom, 20px));
+      left: 0;
+      right: 0;
       display: flex;
-      justify-content: flex-start;
+      justify-content: center;
       align-items: center;
       z-index: 10005;
       pointer-events: none;
@@ -843,16 +848,30 @@
     }
     .lightbox-close {
       position: absolute;
-      top: 18px;
-      right: 24px;
+      bottom: max(22px, env(safe-area-inset-bottom, 22px));
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       color: #fff;
-      font-size: 36px;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 17px;
+      font-size: 0.85rem;
+      font-weight: 600;
       cursor: pointer;
-      opacity: 0.75;
-      transition: opacity 0.15s;
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      opacity: 0.9;
+      transition: all 0.15s ease;
+      z-index: 10005;
     }
-    .lightbox-close:hover {
+    .lightbox-close:hover, .lightbox-close:active {
       opacity: 1;
+      background: rgba(255, 255, 255, 0.2);
     }
 
     /* Всплывающие уведомления */
@@ -1336,7 +1355,7 @@
 
   <!-- Одиночный просмотр фото на весь экран -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <span class="lightbox-close">&times;</span>
+    <button type="button" class="lightbox-close" onclick="closeLightbox()">Назад</button>
     <div class="lightbox-content" onclick="closeLightbox()">
       <img id="lightboxImg" src="" alt="Просмотр" onclick="closeLightbox()">
     </div>

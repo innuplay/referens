@@ -1543,13 +1543,40 @@
       }
     }
 
-    function optimizeImageUrl(rawUrl) {
-      return new Promise((resolve, reject) => {
-        // Очищаем ссылку от лишних пробелов
-        let url = rawUrl.trim();
+    async function resolveImageUrl(inputUrl) {
+      let url = inputUrl.trim();
 
-        // Прокси для обхода CORS защиты сайтов (Pinterest, Imgur и др.)
-        const proxyUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(url) + '&output=jpg&q=88';
+      // Если это короткая или обычная ссылка на Pinterest (pin.it / pinterest.com/pin/)
+      if (url.includes('pin.it') || url.includes('pinterest.com')) {
+        try {
+          // Используем бесплатный CORS прокси allorigins, чтобы прочитать HTML страницы пина
+          const api = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+          const res = await fetch(api);
+          const data = await res.json();
+          if (data && data.contents) {
+            // Ищем в HTML ссылку на оригинал или крупное фото i.pinimg.com
+            const matchOrig = data.contents.match(/https:\/\/i\.pinimg\.com\/originals\/[^\s"'\\]+\.(jpg|jpeg|png|webp)/i)
+                           || data.contents.match(/https:\/\/i\.pinimg\.com\/1200x\/[^\s"'\\]+\.(jpg|jpeg|png|webp)/i)
+                           || data.contents.match(/https:\/\/i\.pinimg\.com\/736x\/[^\s"'\\]+\.(jpg|jpeg|png|webp)/i)
+                           || data.contents.match(/https:\/\/i\.pinimg\.com\/[^\s"'\\]+\.(jpg|jpeg|png|webp)/i);
+            if (matchOrig && matchOrig[0]) {
+              return matchOrig[0].replace(/\\/g, '');
+            }
+          }
+        } catch (e) {
+          console.log('Failed to parse pin page via allorigins, trying direct...', e);
+        }
+      }
+
+      return url;
+    }
+
+    async function optimizeImageUrl(rawUrl) {
+      const targetUrl = await resolveImageUrl(rawUrl);
+
+      return new Promise((resolve, reject) => {
+        // Прокси для обхода CORS защиты сайтов
+        const proxyUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(targetUrl) + '&output=jpg&q=88';
 
         const tryLoad = (srcToLoad, isFallback) => {
           const img = new Image();
@@ -1574,13 +1601,13 @@
             try {
               resolve(canvas.toDataURL('image/jpeg', 0.88));
             } catch (e) {
-              if (!isFallback) tryLoad(proxyUrl, true);
+              if (!isFallback) tryLoad(targetUrl, true);
               else reject(e);
             }
           };
           img.onerror = () => {
             if (!isFallback) {
-              tryLoad(proxyUrl, true);
+              tryLoad(targetUrl, true);
             } else {
               reject(new Error('Image load failed'));
             }
@@ -1588,7 +1615,6 @@
           img.src = srcToLoad;
         };
 
-        // Сначала пробуем через быстрый прокси weserv (он умеет открывать любые ссылки картинок из Pinterest)
         tryLoad(proxyUrl, false);
       });
     }

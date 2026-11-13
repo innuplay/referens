@@ -239,6 +239,15 @@
       background: rgba(251, 191, 36, 0.25);
       color: #fff;
     }
+    .paste-clip-btn.url-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: var(--text-muted);
+    }
+    .paste-clip-btn.url-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
     .tab-actions {
       display: flex;
       align-items: center;
@@ -266,10 +275,10 @@
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 12px;
+      padding: 14px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 12px;
       align-content: start;
     }
     .album-grid-container::-webkit-scrollbar {
@@ -305,18 +314,33 @@
       display: block;
     }
 
-    .on-board-badge {
+    /* Значок-галочка/пин в углу фото (без лишних надписей) */
+    .photo-pin-badge {
       position: absolute;
-      top: 6px;
-      left: 6px;
+      top: 8px;
+      left: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      z-index: 3;
+      backdrop-filter: blur(4px);
+    }
+    .photo-card:hover .photo-pin-badge {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .photo-card.on-board .photo-pin-badge {
       background: var(--gold);
+      border-color: var(--gold);
       color: #000;
-      font-size: 0.68rem;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 6px;
-      pointer-events: none;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.5);
     }
 
     .photo-overlay {
@@ -336,15 +360,15 @@
     .photo-actions-top {
       display: flex;
       justify-content: flex-end;
-      gap: 4px;
+      gap: 6px;
     }
     .action-btn-mini {
-      background: rgba(0, 0, 0, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       color: #fff;
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -358,16 +382,6 @@
     .action-btn-mini.zoom-btn:hover {
       background: rgba(99, 102, 241, 0.85);
       border-color: #6366f1;
-    }
-
-    .photo-add-hint {
-      color: #fff;
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-align: center;
-      background: rgba(0,0,0,0.7);
-      padding: 4px 6px;
-      border-radius: 6px;
     }
 
     .empty-tab-state {
@@ -779,8 +793,8 @@
         font-size: 0.78rem;
       }
       .album-grid-container {
-        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-        gap: 6px;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 8px;
         padding: 8px;
       }
       .board-canvas {
@@ -835,10 +849,16 @@
 
         <div class="tab-header-info">
           <div class="tab-title-text" id="activeTabTitle">фото</div>
-          <button class="paste-clip-btn" onclick="pasteFromClipboard()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-            Вставить
-          </button>
+          <div class="tab-actions">
+            <button class="paste-clip-btn" onclick="pasteFromClipboard()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+              Вставить
+            </button>
+            <button class="paste-clip-btn url-btn" onclick="openUrlModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+              По ссылке
+            </button>
+          </div>
         </div>
 
         <div class="album-grid-container" id="albumGrid">
@@ -881,6 +901,19 @@
     <span class="lightbox-close">&times;</span>
     <div class="lightbox-content" onclick="event.stopPropagation()">
       <img id="lightboxImg" src="" alt="Просмотр">
+    </div>
+  </div>
+
+  <!-- Модальное окно добавления картинки по ссылке -->
+  <div class="url-modal-overlay" id="urlModal" onclick="closeUrlModal()">
+    <div class="url-modal-card" onclick="event.stopPropagation()">
+      <div class="url-modal-title">Вставить изображение по ссылке</div>
+      <p class="url-modal-desc">Вставьте прямую ссылку на картинку или ссылку из Pinterest</p>
+      <input type="text" id="urlInput" class="url-modal-input" placeholder="https://...jpg, png, webp" onkeydown="if(event.key==='Enter') submitUrlImage()">
+      <div class="url-modal-actions">
+        <button class="modal-btn cancel" onclick="closeUrlModal()">Отмена</button>
+        <button class="modal-btn submit" onclick="submitUrlImage()">Загрузить</button>
+      </div>
     </div>
   </div>
 
@@ -1048,18 +1081,20 @@
         html += `
           <div class="photo-card ${isOnBoard ? 'on-board' : ''}" id="card_${it.id}" onclick="toggleBoardItem('${it.id}')">
             <img src="${it.image}" alt="Фото" loading="lazy">
-            ${isOnBoard ? `<div class="on-board-badge">На доске</div>` : ''}
+            <div class="photo-pin-badge" title="${isOnBoard ? 'Убрать с доски' : 'Поместить на доску'}">
+              ${isOnBoard 
+                ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
+              }
+            </div>
             <div class="photo-overlay">
               <div class="photo-actions-top">
                 <button class="action-btn-mini zoom-btn" title="Увеличить" onclick="openLightbox('${it.image}', event)">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
                 </button>
                 <button class="action-btn-mini" title="Удалить из альбома" onclick="deletePhoto('${it.id}', event)">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
-              </div>
-              <div class="photo-add-hint">
-                ${isOnBoard ? 'Убрать с доски' : '+ На доску'}
               </div>
             </div>
           </div>
@@ -1093,7 +1128,7 @@
         canvas.innerHTML = `
           <div class="empty-board-notice">
             <h3>Доска пуста</h3>
-            <p>Кликайте по любым фото в альбоме слева, чтобы выложить их сюда.</p>
+            <p>Нажмите на любое фото в альбоме слева (или на значок + в углу фото), чтобы перенести его сюда на доску.</p>
           </div>
         `;
         return;

@@ -611,29 +611,12 @@
     .fs-pureref-bar {
       position: absolute;
       top: max(12px, env(safe-area-inset-top, 12px));
-      left: 14px;
       right: 14px;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       z-index: 10005;
       pointer-events: none;
-    }
-    .fs-pureref-hints {
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      color: rgba(255, 255, 255, 0.7);
-      pointer-events: auto;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .fs-pureref-hints span b {
-      color: var(--gold);
     }
     .fs-pureref-actions {
       display: flex;
@@ -1287,20 +1270,12 @@
 
   <!-- ПОЛНОЭКРАННАЯ ОБЪЕДИНЕННАЯ ДОСКА В СТИЛЕ PUREREF -->
   <div class="fullscreen-board-modal" id="fullscreenBoardModal">
-    <!-- Верхняя панель PureRef -->
+    <!-- Верхняя панель PureRef (только Сброс, Упорядочить, Назад) -->
     <div class="fs-pureref-bar">
-      <div class="fs-pureref-hints">
-        <span><b>ЛКМ</b> — двигать реф</span>
-        <span><b>Углы</b> — размер</span>
-        <span><b>ПКМ / фон</b> — панорама</span>
-        <span><b>Колёсико</b> — зум</span>
-      </div>
       <div class="fs-pureref-actions">
-        <button type="button" class="fs-tool-btn" onclick="resetPureRefView()" title="Сбросить масштаб и положение">Сброс вида</button>
+        <button type="button" class="fs-tool-btn" onclick="resetPureRefView()" title="Сбросить масштаб и положение">Сброс</button>
         <button type="button" class="fs-tool-btn" onclick="autoLayoutPureRef()" title="Аккуратно расставить в ряд">Упорядочить</button>
-        <button type="button" class="fs-floating-close" onclick="closeFullscreenBoard(event)" ontouchstart="closeFullscreenBoard(event)" title="Закрыть (Esc)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
+        <button type="button" class="fs-tool-btn" onclick="closeFullscreenBoard(event)" ontouchstart="closeFullscreenBoard(event)" title="Вернуться назад (Esc)">Назад</button>
       </div>
     </div>
 

@@ -503,7 +503,14 @@
       transition: all 0.15s ease;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 5px;
+    }
+    .board-btn.clear-icon-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 8px;
     }
     .board-btn:hover {
       background: rgba(255, 255, 255, 0.14);
@@ -1315,7 +1322,12 @@
             <div class="board-title-text">Доска</div>
           </div>
           <div class="board-controls">
-            <button class="board-btn danger" onclick="clearBoard()">Очистить</button>
+            <button class="board-btn danger clear-icon-btn" onclick="clearBoard()" title="Очистить доску">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
         </div>
 

@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>referens</title>
+  <meta name="theme-color" content="#090a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Referens">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090a0f;
+      --card-bg: #141721;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.2);
+      --text-main: #f0f2f5;
+      --text-muted: #8e95a5;
+      --accent: #6366f1;
+      --gold: #f59e0b;
+      --danger: #ef4444;
+      --radius-sm: 10px;
+      --radius-md: 14px;
+      --radius-lg: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+
+    .app-wrapper {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 20px 16px;
+      max-width: 1680px;
+      margin: 0 auto;
+      gap: 12px;
+    }
+
+    /* Верхняя полоса: заголовок строго по центру */
+    header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 2px 0 4px;
+    }
+
+    .header-center-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      padding: 6px 22px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+    }
+
+    .header-hint {
+      position: absolute;
+      right: 0;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .header-hint kbd {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #fff;
+      font-family: inherit;
+      font-weight: 600;
+    }
+
+    /* Главный двухколоночный экран */
+    .main-workspace {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 14px;
+    }
+
+    /* ==========================================================
+       ЛЕВАЯ ПАНЕЛЬ: Вкладки альбома (фото, эмоция, одежда, предметы, образы)
+       ========================================================== */
+    .album-panel {
+      background: #11141d;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .album-tabs-bar {
+      flex-shrink: 0;
+      display: flex;
+      gap: 6px;
+      padding: 10px 12px;
+      background: #0d0f16;
+      border-bottom: 1px solid var(--card-border);
+      overflow-x: auto;
+    }
+    .album-tabs-bar::-webkit-scrollbar {
+      height: 4px;
+    }
+    .album-tabs-bar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    .tab-btn.active {
+      background: #202638;
+      border-color: rgba(99, 102, 241, 0.6);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+    }
+    .tab-count {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+    .tab-btn.active .tab-count {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .tab-header-info {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.015);
+    }
+    .tab-title-text {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #fff;
+      text-transform: capitalize;
+    }
+    .tab-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .add-photo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .add-photo-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .album-grid-container {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      align-content: start;
+    }
+    .album-grid-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .album-grid-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+    }
+
+    .photo-card {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #090a0f;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .photo-card:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+    .photo-card.on-board {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px var(--gold);
+    }
+    .photo-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .on-board-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: var(--gold);
+      color: #000;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+      pointer-events: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    .photo-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 6px;
+    }
+    .photo-card:hover .photo-overlay {
+      opacity: 1;
+    }
+    .photo-actions-top {
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+    .action-btn-mini {
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .action-btn-mini:hover {
+      background: rgba(239, 68, 68, 0.85);
+      border-color: #ef4444;
+    }
+    .action-btn-mini.zoom-btn:hover {
+      background: rgba(99, 102, 241, 0.85);
+      border-color: #6366f1;
+    }
+
+    .photo-add-hint {
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-align: center;
+      background: rgba(0,0,0,0.7);
+      padding: 4px 6px;
+      border-radius: 6px;
+    }
+
+    .empty-tab-state {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      text-align: center;
+      gap: 8px;
+    }
+    .empty-tab-state b {
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    /* ==========================================================
+       ПРАВАЯ ПАНЕЛЬ: ДОСКА РЕФЕРЕНСОВ (любое количество картинок)
+       ========================================================== */
+    .board-panel {
+      background: #11141d;
+      border: 1.5px solid rgba(245, 158, 11, 0.35);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+      position: relative;
+    }
+
+    .board-header {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      background: #0d0f16;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .board-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .board-title-text {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .board-count-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(251, 191, 36, 0.18);
+      color: #fde68a;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .board-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .board-btn {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .board-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+    .board-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    /* Полотно доски (сетка референсов) */
+    .board-canvas {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      align-content: start;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.02) 0%, transparent 70%),
+        #0b0d13;
+      cursor: zoom-in;
+    }
+    .board-canvas::-webkit-scrollbar {
+      width: 6px;
+    }
+    .board-canvas::-webkit-scrollbar-thumb {
+      background: rgba(251, 191, 36, 0.2);
+      border-radius: 3px;
+    }
+
+    .board-item {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #141722;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .board-item:hover {
+      transform: translateY(-2px);
+      border-color: rgba(251, 191, 36, 0.6);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    }
+    .board-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+    }
+
+    .board-item-category {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      text-transform: capitalize;
+      pointer-events: none;
+    }
+
+    .board-item-remove {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      z-index: 2;
+    }
+    .board-item:hover .board-item-remove {
+      display: flex;
+    }
+    .board-item-remove:hover {
+      background: var(--danger);
+      border-color: var(--danger);
+    }
+
+    .empty-board-notice {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      gap: 10px;
+      cursor: default;
+    }
+    .empty-board-notice h3 {
+      font-size: 1.05rem;
+      color: #fff;
+      font-weight: 700;
+    }
+    .empty-board-notice p {
+      font-size: 0.85rem;
+      max-width: 380px;
+      line-height: 1.5;
+    }
+
+    /* ==========================================================
+       ПОЛНОЭКРАННОЕ ОБЪЕДИНЕНИЕ ВСЕХ ОБЪЕКТОВ
+       ========================================================== */
+    .fullscreen-board-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.94);
+      backdrop-filter: blur(8px);
+      z-index: 9990;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      overflow: hidden;
+      cursor: zoom-out;
+    }
+    .fullscreen-board-modal.open {
+      display: flex;
+    }
+
+    /* Кнопка закрытия в правом верхнем углу */
+    .fs-floating-close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.15s ease;
+    }
+    .fs-floating-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Сетка картинок: аккуратно центрирована, помещается полностью */
+    .fs-seamless-collage {
+      width: 100%;
+      height: 100%;
+      max-width: 95vw;
+      max-height: 90vh;
+      display: grid;
+      gap: 10px;
+      background: transparent;
+      overflow: hidden;
+      padding: 0;
+      margin: auto;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .fs-seamless-cell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .fs-seamless-cell img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain; /* Помещается целиком, не обрезается */
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      display: block;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .fs-seamless-cell:hover img {
+      transform: scale(1.03);
+      box-shadow: 0 8px 24px rgba(251, 191, 36, 0.25);
+    }
+
+    /* Одиночный Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+    }
+    .lightbox.open {
+      display: flex;
+    }
+    .lightbox-content {
+      position: relative;
+      max-width: 92vw;
+      max-height: 92vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+    }
+    .lightbox-content img {
+      max-width: 100%;
+      max-height: 92vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      color: #fff;
+      font-size: 36px;
+      cursor: pointer;
+      opacity: 0.75;
+      transition: opacity 0.15s;
+    }
+    .lightbox-close:hover {
+      opacity: 1;
+    }
+
+    /* Всплывающие уведомления */
+    .toast-notification {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e2230;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.12);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10001;
+      pointer-events: none;
+    }
+    .toast-notification.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Мобильная адаптация для смартфонов и планшетов */
+    @media (max-width: 860px) {
+      .app-wrapper {
+        padding: 8px 10px;
+        gap: 8px;
+        height: 100dvh;
+      }
+      .header-hint {
+        display: none; /* скрываем на мобильных подсказку ctrl+v */
+      }
+      .main-workspace {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 8px;
+      }
+      .album-tabs-bar {
+        padding: 6px 8px;
+        gap: 4px;
+      }
+      .tab-btn {
+        padding: 6px 10px;
+        font-size: 0.78rem;
+      }
+      .album-grid-container {
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+        gap: 6px;
+        padding: 8px;
+      }
+      .board-canvas {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 8px;
+        padding: 8px;
+      }
+      .board-item-remove {
+        display: flex; /* на тач-экранах кнопка удаления видна сразу */
+        opacity: 0.85;
+      }
+      .album-item-overlay {
+        opacity: 1; /* элементы управления на тачскрине доступны */
+        background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 40%, rgba(0,0,0,0.7) 100%);
+      }
+      .fullscreen-board-modal {
+        padding: 12px;
+      }
+      .fs-seamless-collage {
+        max-width: 98vw;
+        max-height: 94vh;
+        gap: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- Верхняя шапка: Заголовок по центру -->
+    <header>
+      <div class="header-center-pill">создать персонажа</div>
+      <div class="header-hint">
+        Вставить картинку: <kbd>Ctrl + V</kbd> в выбранную вкладку
+      </div>
+    </header>
+
+    <!-- Основная рабочая область: Слева альбом, Справа доска референсов -->
+    <main class="main-workspace">
+      
+      <!-- ЛЕВАЯ КОЛОНКА: Вкладки альбома -->
+      <section class="album-panel">
+        <div class="album-tabs-bar" id="albumTabsBar">
+          <!-- Рендерится скриптом -->
+        </div>
+
+        <div class="tab-header-info">
+          <div class="tab-title-text" id="activeTabTitle">фото</div>
+          <div class="tab-actions">
+            <input type="file" id="fileInput" accept="image/*" multiple style="display:none;" onchange="handleFileSelect(event)">
+            <button class="add-photo-btn" onclick="document.getElementById('fileInput').click()">
+              + Добавить фото
+            </button>
+          </div>
+        </div>
+
+        <div class="album-grid-container" id="albumGrid">
+          <!-- Фотографии активной вкладки -->
+        </div>
+      </section>
+
+      <!-- ПРАВАЯ КОЛОНКА: Доска совместного просмотра (любое кол-во фото) -->
+      <section class="board-panel">
+        <div class="board-header">
+          <div class="board-title-group">
+            <div class="board-title-text">Доска референсов</div>
+          </div>
+          <div class="board-controls">
+            <button class="board-btn danger" onclick="clearBoard()">Очистить доску</button>
+          </div>
+        </div>
+
+        <!-- Клик по пустому месту открывает все объекты вместе на весь экран встык -->
+        <div class="board-canvas" id="boardCanvas" onclick="handleCanvasClick(event)">
+          <!-- Карточки, добавленные на доску -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ПОЛНОЭКРАННАЯ ОБЪЕДИНЕННАЯ ДОСКА (ВСЕ ОБЪЕКТЫ ВСТЫК БЕЗ РАМОК) -->
+  <div class="fullscreen-board-modal" id="fullscreenBoardModal" onclick="closeFullscreenBoard()">
+    <button class="fs-floating-close" onclick="closeFullscreenBoard()">
+      Закрыть ✕
+    </button>
+    <div class="fs-seamless-collage" id="fsCollageContainer">
+      <!-- Все картинки вплотную друг к другу -->
+    </div>
+  </div>
+
+  <!-- Одиночный просмотр фото на весь экран -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+      <img id="lightboxImg" src="" alt="Просмотр">
+    </div>
+  </div>
+
+  <!-- Уведомление -->
+  <div class="toast-notification" id="toast">
+    <span id="toastMsg">Готово!</span>
+  </div>
+
+  <script>
+    /* Категории альбома:
+       - people -> «фото»
+       - emotion -> «эмоция»
+       - spaces -> «одежда»
+       - items -> «предметы»
+       - creatures -> «образы»
+    */
+    const CATEGORIES = {
+      people: { id: 'people', title: 'фото' },
+      emotion: { id: 'emotion', title: 'эмоция' },
+      spaces: { id: 'spaces', title: 'одежда' },
+      items: { id: 'items', title: 'предметы' },
+      creatures: { id: 'creatures', title: 'образы' }
+    };
+
+    let activeTabId = 'people';
+
+    // База данных IndexedDB (VisualBoardDB v3)
+    const DB_NAME = 'VisualBoardDB';
+    const STORE_ITEMS = 'category_items';
+    let db = null;
+
+    // Список картинок, выбранных на доску (ID фото)
+    let boardItemIds = JSON.parse(localStorage.getItem('user_board_items') || '[]');
+
+    function saveBoardToStorage() {
+      localStorage.setItem('user_board_items', JSON.stringify(boardItemIds));
+    }
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 3);
+        req.onupgradeneeded = (e) => {
+          const dbInstance = e.target.result;
+          if (!dbInstance.objectStoreNames.contains(STORE_ITEMS)) {
+            const store = dbInstance.createObjectStore(STORE_ITEMS, { keyPath: 'id' });
+            store.createIndex('folderId', 'folderId', { unique: false });
+            store.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+        };
+        req.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        req.onerror = (e) => reject(e);
+      });
+    }
+
+    async function getFolderItems(folderId) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_ITEMS, 'readonly');
+        const store = tx.objectStore(STORE_ITEMS);
+        const index = store.index('folderId');
+        const req = index.getAll(IDBKeyRange.only(folderId));
+        req.onsuccess = () => {
+          const items = req.result.sort((a, b) => b.createdAt - a.createdAt);
+          resolve(items);
+        };
+        req.onerror = () => resolve([]);
+      });
+    }
+
+    async function getItemById(id) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_ITEMS, 'readonly');
+        const store = tx.objectStore(STORE_ITEMS);
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function getFolderCount(folderId) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_ITEMS, 'readonly');
+        const store = tx.objectStore(STORE_ITEMS);
+        const index = store.index('folderId');
+        const req = index.count(IDBKeyRange.only(folderId));
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(0);
+      });
+    }
+
+    async function addItemToDB(folderId, imageData) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_ITEMS, 'readwrite');
+        const store = tx.objectStore(STORE_ITEMS);
+        const record = {
+          id: 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+          folderId: folderId,
+          image: imageData,
+          createdAt: Date.now()
+        };
+        store.add(record);
+        tx.oncomplete = () => resolve(record);
+        tx.onerror = (e) => reject(e);
+      });
+    }
+
+    async function deleteItemFromDB(id) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_ITEMS, 'readwrite');
+        const store = tx.objectStore(STORE_ITEMS);
+        store.delete(id);
+        tx.oncomplete = () => {
+          boardItemIds = boardItemIds.filter(x => x !== id);
+          saveBoardToStorage();
+          resolve();
+        };
+      });
+    }
+
+    // Рендер вкладок альбома
+    async function renderTabs() {
+      const container = document.getElementById('albumTabsBar');
+      let html = '';
+      for (const key of Object.keys(CATEGORIES)) {
+        const cat = CATEGORIES[key];
+        const count = await getFolderCount(key);
+        const isActive = (key === activeTabId);
+        html += `
+          <button class="tab-btn ${isActive ? 'active' : ''}" onclick="switchTab('${key}')">
+            <span>${cat.title}</span>
+            <span class="tab-count">${count}</span>
+          </button>
+        `;
+      }
+      container.innerHTML = html;
+      document.getElementById('activeTabTitle').textContent = CATEGORIES[activeTabId].title;
+    }
+
+    async function switchTab(tabId) {
+      activeTabId = tabId;
+      await renderTabs();
+      await renderAlbumGrid();
+    }
+
+    // Рендер сетки фотографий активной вкладки
+    async function renderAlbumGrid() {
+      const container = document.getElementById('albumGrid');
+      const items = await getFolderItems(activeTabId);
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-tab-state">
+            <b>В этой вкладке пока пусто</b>
+            <span>Нажмите «+ Добавить фото» или вставьте изображение через Ctrl + V</span>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      items.forEach(it => {
+        const isOnBoard = boardItemIds.includes(it.id);
+        html += `
+          <div class="photo-card ${isOnBoard ? 'on-board' : ''}" id="card_${it.id}" onclick="toggleBoardItem('${it.id}')">
+            <img src="${it.image}" alt="Фото" loading="lazy">
+            ${isOnBoard ? `<div class="on-board-badge">На доске</div>` : ''}
+            <div class="photo-overlay">
+              <div class="photo-actions-top">
+                <button class="action-btn-mini zoom-btn" title="Увеличить" onclick="openLightbox('${it.image}', event)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                </button>
+                <button class="action-btn-mini" title="Удалить из альбома" onclick="deletePhoto('${it.id}', event)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
+              <div class="photo-add-hint">
+                ${isOnBoard ? 'Убрать с доски' : '+ На доску'}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    async function toggleBoardItem(itemId) {
+      const idx = boardItemIds.indexOf(itemId);
+      if (idx > -1) {
+        boardItemIds.splice(idx, 1);
+        showToast('Убрано с доски');
+      } else {
+        boardItemIds.push(itemId);
+        showToast('Помещено на доску!');
+      }
+      saveBoardToStorage();
+      await renderAlbumGrid();
+      await renderBoard();
+    }
+
+    // Рендер доски справа
+    async function renderBoard() {
+      const canvas = document.getElementById('boardCanvas');
+      const badge = document.getElementById('boardCountBadge');
+      if (badge) badge.textContent = `${boardItemIds.length} на доске`;
+
+      if (boardItemIds.length === 0) {
+        canvas.innerHTML = `
+          <div class="empty-board-notice">
+            <h3>Доска пуста</h3>
+            <p>Кликайте по любым фото в альбоме слева, чтобы выложить их сюда.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      for (const id of boardItemIds) {
+        const item = await getItemById(id);
+        if (!item) continue;
+        const catName = CATEGORIES[item.folderId] ? CATEGORIES[item.folderId].title : '';
+        html += `
+          <div class="board-item" data-id="${item.id}" onclick="handleBoardItemClick('${item.image}', event)">
+            <img src="${item.image}" alt="Реф" loading="lazy">
+            ${catName ? `<div class="board-item-category">${catName}</div>` : ''}
+            <button class="board-item-remove" title="Убрать с доски" onclick="removeBoardItemOnly('${item.id}', event)">
+              &times;
+            </button>
+          </div>
+        `;
+      }
+
+      canvas.innerHTML = html;
+    }
+
+    // Клик на конкретную картинку на доске -> увеличивается только она
+    function handleBoardItemClick(imageSrc, event) {
+      event.stopPropagation(); // Не всплывает на пустую доску
+      openLightbox(imageSrc, event);
+    }
+
+    // Клик на пустое место доски -> все объекты объединяются на весь экран
+    function handleCanvasClick(e) {
+      if (e.target.closest('.board-item') || e.target.closest('.empty-board-notice')) return;
+      openFullscreenBoard();
+    }
+
+    // ==========================================================
+    // ВСЕ ОБЪЕКТЫ НА ВЕСЬ ЭКРАН ВСТЫК БЕЗ РАМОК
+    // ==========================================================
+    async function openFullscreenBoard() {
+      if (boardItemIds.length === 0) return;
+
+      const modal = document.getElementById('fullscreenBoardModal');
+      const collage = document.getElementById('fsCollageContainer');
+
+      const count = boardItemIds.length;
+      let cols = 1;
+      let rows = 1;
+
+      if (count === 1) {
+        cols = 1; rows = 1;
+      } else if (count === 2) {
+        cols = 2; rows = 1;
+      } else if (count <= 4) {
+        cols = 2; rows = 2;
+      } else if (count <= 6) {
+        cols = 3; rows = 2;
+      } else if (count <= 9) {
+        cols = 3; rows = 3;
+      } else if (count <= 12) {
+        cols = 4; rows = 3;
+      } else {
+        cols = Math.ceil(Math.sqrt(count * 1.4));
+        rows = Math.ceil(count / cols);
+      }
+
+      collage.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+      collage.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+      let html = '';
+      for (const id of boardItemIds) {
+        const item = await getItemById(id);
+        if (!item) continue;
+        html += `
+          <div class="fs-seamless-cell" onclick="handleFsCellClick('${item.image}', event)">
+            <img src="${item.image}" alt="Объект">
+          </div>
+        `;
+      }
+
+      collage.innerHTML = html;
+      modal.classList.add('open');
+    }
+
+    function handleFsCellClick(imageSrc, event) {
+      event.stopPropagation();
+      openLightbox(imageSrc, event);
+    }
+
+    function closeFullscreenBoard() {
+      const modal = document.getElementById('fullscreenBoardModal');
+      modal.classList.remove('open');
+    }
+
+    // Клавиша Esc
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const lb = document.getElementById('lightbox');
+        if (lb && lb.classList.contains('open')) {
+          closeLightbox();
+          return;
+        }
+        closeFullscreenBoard();
+      }
+    });
+
+    async function removeBoardItemOnly(id, event) {
+      if (event) event.stopPropagation();
+      boardItemIds = boardItemIds.filter(x => x !== id);
+      saveBoardToStorage();
+      await renderAlbumGrid();
+      await renderBoard();
+    }
+
+    async function clearBoard() {
+      if (boardItemIds.length === 0) return;
+      boardItemIds = [];
+      saveBoardToStorage();
+      await renderAlbumGrid();
+      await renderBoard();
+      showToast('Доска очищена');
+    }
+
+    async function deletePhoto(itemId, event) {
+      if (event) event.stopPropagation();
+      await deleteItemFromDB(itemId);
+      await renderTabs();
+      await renderAlbumGrid();
+      await renderBoard();
+      showToast('Фото удалено');
+    }
+
+    function optimizeImage(blob) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          const maxDim = 1400;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.88));
+          URL.revokeObjectURL(img.src);
+        };
+        img.src = URL.createObjectURL(blob);
+      });
+    }
+
+    async function handleFileSelect(event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('image/')) {
+          const opt = await optimizeImage(file);
+          await addItemToDB(activeTabId, opt);
+        }
+      }
+      event.target.value = '';
+      await renderTabs();
+      await renderAlbumGrid();
+      showToast(`Добавлено во вкладку «${CATEGORIES[activeTabId].title}»!`);
+    }
+
+    window.addEventListener('paste', async (event) => {
+      const clipboardItems = (event.clipboardData || event.originalEvent.clipboardData).items;
+      for (let i = 0; i < clipboardItems.length; i++) {
+        if (clipboardItems[i].type.indexOf('image') !== -1) {
+          event.preventDefault();
+          const blob = clipboardItems[i].getAsFile();
+          if (!blob) return;
+
+          const opt = await optimizeImage(blob);
+          await addItemToDB(activeTabId, opt);
+          await renderTabs();
+          await renderAlbumGrid();
+          showToast(`Добавлено во вкладку «${CATEGORIES[activeTabId].title}»!`);
+          break;
+        }
+      }
+    });
+
+    function openLightbox(src, event) {
+      if (event) event.stopPropagation();
+      const lightbox = document.getElementById('lightbox');
+      const img = document.getElementById('lightboxImg');
+      img.src = src;
+      lightbox.classList.add('open');
+    }
+
+    function closeLightbox() {
+      const lightbox = document.getElementById('lightbox');
+      lightbox.classList.remove('open');
+    }
+
+    let toastTimeout = null;
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = message;
+      toast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    async function init() {
+      await initDB();
+      await renderTabs();
+      await renderAlbumGrid();
+      await renderBoard();
+
+      // Регистрация Service Worker для PWA (работа офлайн и установка как приложение)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch((err) => {
+          console.log('SW registration error:', err);
+        });
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

@@ -220,6 +220,25 @@
       color: #fff;
       text-transform: capitalize;
     }
+
+    .paste-clip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: #fbbf24;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .paste-clip-btn:hover {
+      background: rgba(251, 191, 36, 0.25);
+      color: #fff;
+    }
     .tab-actions {
       display: flex;
       align-items: center;
@@ -816,6 +835,10 @@
 
         <div class="tab-header-info">
           <div class="tab-title-text" id="activeTabTitle">фото</div>
+          <button class="paste-clip-btn" onclick="pasteFromClipboard()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+            Вставить
+          </button>
         </div>
 
         <div class="album-grid-container" id="albumGrid">
@@ -1302,6 +1325,35 @@
       await renderTabs();
       await renderAlbumGrid();
       showToast(`Добавлено во вкладку «${CATEGORIES[activeTabId].title}»!`);
+    }
+
+    async function pasteFromClipboard() {
+      try {
+        if (!navigator.clipboard || !navigator.clipboard.read) {
+          showToast('Нажмите Ctrl+V на клавиатуре');
+          return;
+        }
+        const clipboardItems = await navigator.clipboard.read();
+        let found = false;
+        for (const item of clipboardItems) {
+          const imageType = item.types.find(type => type.startsWith('image/'));
+          if (imageType) {
+            const blob = await item.getType(imageType);
+            const opt = await optimizeImage(blob);
+            await addItemToDB(activeTabId, opt);
+            await renderTabs();
+            await renderAlbumGrid();
+            showToast(`Добавлено во вкладку «${CATEGORIES[activeTabId].title}»!`);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          showToast('В буфере обмена нет картинки');
+        }
+      } catch (err) {
+        showToast('Разрешите вставку в браузере или нажмите Ctrl+V');
+      }
     }
 
     window.addEventListener('paste', async (event) => {

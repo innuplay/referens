@@ -980,7 +980,6 @@
     /* Выпадающий список выбора категории из плюса */
     .search-cat-picker-menu {
       position: absolute;
-      bottom: 40px;
       right: 6px;
       background: #0d0f16;
       border: 1px solid var(--gold);
@@ -989,14 +988,20 @@
       display: flex;
       flex-direction: column;
       gap: 3px;
-      z-index: 20;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      z-index: 50;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.95);
       min-width: 110px;
       animation: menuPop 0.15s ease-out;
     }
+    .search-cat-picker-menu.pos-above {
+      bottom: 40px;
+    }
+    .search-cat-picker-menu.pos-below {
+      top: 40px;
+    }
     @keyframes menuPop {
-      from { opacity: 0; transform: scale(0.9) translateY(6px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
     }
     .search-cat-picker-btn {
       background: transparent;
@@ -2197,6 +2202,16 @@
             // Закрываем все другие открытые меню в поиске
             document.querySelectorAll('.search-cat-picker-menu').forEach(m => m.style.display = 'none');
             if (!isOpen) {
+              // Проверяем, сколько места сверху в контейнере
+              const rect = item.getBoundingClientRect();
+              const gridRect = grid.getBoundingClientRect();
+              if (rect.top - gridRect.top < 180) {
+                catMenu.classList.remove('pos-above');
+                catMenu.classList.add('pos-below');
+              } else {
+                catMenu.classList.remove('pos-below');
+                catMenu.classList.add('pos-above');
+              }
               catMenu.style.display = 'flex';
             }
           };

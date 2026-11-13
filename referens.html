@@ -1153,14 +1153,16 @@
       items.forEach(it => {
         const isOnBoard = boardItemIds.includes(it.id);
         html += `
-          <div class="photo-card ${isOnBoard ? 'on-board' : ''}" id="card_${it.id}" onclick="openLightbox('${it.image}', event)">
-            <img src="${it.image}" alt="Фото" loading="lazy">
-            <div class="photo-pin-badge" title="${isOnBoard ? 'Убрать с доски' : 'Поместить на доску'}" onclick="handlePinBadgeClick('${it.id}', event)">
+          <div class="photo-card ${isOnBoard ? 'on-board' : ''}" id="card_${it.id}">
+            <img src="${it.image}" alt="Фото" loading="lazy" onclick="openLightbox('${it.image}', event)">
+            <button type="button" class="photo-pin-badge" title="${isOnBoard ? 'Убрать с доски' : 'Поместить на доску'}" 
+              ontouchstart="handlePinTouch('${it.id}', event)" 
+              onclick="handlePinBadgeClick('${it.id}', event)">
               ${isOnBoard 
                 ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><polyline points="20 6 9 17 4 12"></polyline></svg>'
                 : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
               }
-            </div>
+            </button>
             <div class="photo-overlay">
               <div class="photo-actions-top">
                 <button class="action-btn-mini" title="Удалить из альбома" onclick="deletePhoto('${it.id}', event)">
@@ -1327,8 +1329,17 @@
       }
     }
 
+    let lastTouchTime = 0;
+    function handlePinTouch(itemId, event) {
+      event.stopPropagation();
+      lastTouchTime = Date.now();
+      toggleBoardItem(itemId);
+    }
+
     function handlePinBadgeClick(itemId, event) {
       if (event) event.stopPropagation();
+      // Предотвращаем двойное срабатывание touchstart + click на мобильных
+      if (Date.now() - lastTouchTime < 400) return;
       toggleBoardItem(itemId);
     }
 

@@ -170,6 +170,12 @@
       background: rgba(255, 255, 255, 0.08);
       color: #fff;
     }
+    .tab-btn.active {
+      border-color: var(--gold);
+      color: #000;
+      background: var(--gold);
+      box-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);
+    }
     .tab-btn.tab-favorites {
       color: #f43f5e;
       font-size: 1.05rem;
@@ -177,9 +183,9 @@
     }
     .tab-btn.tab-favorites.active {
       border-color: #f43f5e;
-      color: #f43f5e;
-      background: rgba(244, 63, 94, 0.15);
-      box-shadow: 0 2px 10px rgba(244, 63, 94, 0.25);
+      color: #fff;
+      background: #f43f5e;
+      box-shadow: 0 2px 10px rgba(244, 63, 94, 0.4);
     }
     .tab-count {
       font-size: 0.72rem;
@@ -317,6 +323,16 @@
       object-fit: cover;
       display: block;
       border-radius: 4px;
+    }
+    .photo-card {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #090a0f;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
     }
     .photo-card:hover {
       border-color: rgba(255, 255, 255, 0.25);
@@ -635,10 +651,10 @@
     /* Верхняя панель управления PureRef */
     .fs-pureref-bar {
       position: absolute;
-      top: max(12px, env(safe-area-inset-top, 12px));
-      right: 14px;
+      top: max(16px, env(safe-area-inset-top, 16px));
+      left: 14px;
       display: flex;
-      justify-content: flex-end;
+      justify-content: flex-start;
       align-items: center;
       z-index: 10005;
       pointer-events: none;
@@ -823,6 +839,7 @@
       object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+      cursor: zoom-out;
     }
     .lightbox-close {
       position: absolute;
@@ -1304,8 +1321,8 @@
     <!-- Верхняя панель PureRef (Сохранить, Назад) -->
     <div class="fs-pureref-bar">
       <div class="fs-pureref-actions">
+        <button type="button" class="fs-tool-btn" onclick="closeFullscreenBoard(event)" ontouchend="closeFullscreenBoard(event)" title="Вернуться назад (Esc)">Назад</button>
         <button type="button" class="fs-tool-btn save-btn" onclick="savePureRefComposition()" title="Сохранить скрепленные картинки в избранное (♥)">Сохранить</button>
-        <button type="button" class="fs-tool-btn" onclick="closeFullscreenBoard(event)" ontouchstart="closeFullscreenBoard(event)" title="Вернуться назад (Esc)">Назад</button>
       </div>
     </div>
 
@@ -1320,8 +1337,8 @@
   <!-- Одиночный просмотр фото на весь экран -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
     <span class="lightbox-close">&times;</span>
-    <div class="lightbox-content" onclick="event.stopPropagation()">
-      <img id="lightboxImg" src="" alt="Просмотр">
+    <div class="lightbox-content" onclick="closeLightbox()">
+      <img id="lightboxImg" src="" alt="Просмотр" onclick="closeLightbox()">
     </div>
   </div>
 
@@ -1493,6 +1510,7 @@
     }
 
     async function switchTab(tabId) {
+      if (Date.now() - lastBoardCloseTime < 450) return;
       activeTabId = tabId;
       const workspace = document.querySelector('.main-workspace');
       if (workspace) {
@@ -1731,7 +1749,6 @@
           applyCardStyles(c);
         });
       } else if (count === 3) {
-        // 3 картинки: верх 1-2, низ 1-2
         if (isPortrait) {
           // Верхняя 1 крупная, снизу 2 рядом
           const topCard = pureRefState.cards[0];
@@ -1766,6 +1783,7 @@
             applyCardStyles(c);
           });
         }
+      }
       } else if (count === 4) {
         // Сетка 2x2 крупно и аккуратно
         const row1Cards = [pureRefState.cards[0], pureRefState.cards[1]];
@@ -1994,8 +2012,13 @@
       openFullscreenItems(items);
     }
 
+    let lastBoardCloseTime = 0;
     function closeFullscreenBoard(event) {
-      if (event) event.stopPropagation();
+      if (event) {
+        if (event.preventDefault) event.preventDefault();
+        event.stopPropagation();
+      }
+      lastBoardCloseTime = Date.now();
       const modal = document.getElementById('fullscreenBoardModal');
       modal.classList.remove('open');
     }
@@ -2669,21 +2692,33 @@
         // 2. Поиск в глобальном Wikimedia Commons по оригинальному запросу
         endpoints.push(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
 
-        // 3. Если в запросе есть кириллица, пробуем перевести на английский (без падения при сбое сети)
+        // 3. Если в запросе есть кириллица, переводим на английский для поиска по международным базам
+        let englishQuery = '';
         if (/[а-яё]/i.test(query)) {
           try {
             const trRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(query)}`);
             if (trRes.ok) {
               const trData = await trRes.json();
               if (trData && trData[0] && trData[0][0] && trData[0][0][0]) {
-                const enWord = trData[0][0][0];
-                endpoints.push(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(enWord)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
-                endpoints.push(`https://en.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(enWord)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
+                englishQuery = trData[0][0][0].trim();
+                endpoints.push(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(englishQuery)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
+                endpoints.push(`https://en.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(englishQuery)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
               }
             }
           } catch (trErr) {
             console.log('Optional translation skipped:', trErr);
           }
+        } else {
+          englishQuery = query;
+        }
+
+        // 4. Поиск артов и иллюстраций в базе Safebooru (аниме, 2D арт, концепты персонажей)
+        const booruTag = (englishQuery || query).toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').trim();
+        let booruPromise = null;
+        if (booruTag) {
+          booruPromise = fetch(`https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&limit=25&tags=${encodeURIComponent(booruTag)}`)
+            .then(r => r.json())
+            .catch(() => []);
         }
 
         // Запускаем запросы безопасно через allSettled
@@ -2693,6 +2728,25 @@
 
         const seenUrls = new Set();
         const validImages = [];
+
+        // Добавляем результаты из Safebooru (персонажи, концепты, 2D)
+        if (booruPromise) {
+          try {
+            const booruItems = await booruPromise;
+            if (Array.isArray(booruItems)) {
+              for (const b of booruItems) {
+                const thumb = b.preview_url || b.sample_url || b.file_url;
+                const full = b.sample_url || b.file_url || thumb;
+                if (thumb && full && !seenUrls.has(full)) {
+                  seenUrls.add(full);
+                  validImages.push({ thumb, full, title: b.tags || 'арт' });
+                }
+              }
+            }
+          } catch (bErr) {
+            console.log('Booru search skipped:', bErr);
+          }
+        }
 
         for (const res of results) {
           if (res.status === 'fulfilled' && res.value && res.value.query && res.value.query.pages) {

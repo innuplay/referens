@@ -937,14 +937,13 @@
       position: relative;
       height: 140px;
       border-radius: 10px;
-      overflow: hidden;
+      overflow: visible;
       background: #090a0f;
       border: 1px solid rgba(255, 255, 255, 0.12);
       cursor: pointer;
       transition: transform 0.15s ease, border-color 0.15s ease;
     }
-    .search-result-item:hover, .search-result-item:active {
-      transform: scale(0.98);
+    .search-result-item:hover {
       border-color: var(--gold);
     }
     .search-result-item img {
@@ -952,23 +951,71 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      border-radius: 9px;
     }
     .search-result-add-badge {
       position: absolute;
-      bottom: 4px;
-      right: 4px;
-      background: rgba(0, 0, 0, 0.75);
+      bottom: 6px;
+      right: 6px;
+      background: rgba(0, 0, 0, 0.85);
       border: 1px solid var(--gold);
       color: var(--gold);
-      border-radius: 5px;
-      width: 22px;
-      height: 22px;
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: bold;
-      pointer-events: none;
+      cursor: pointer;
+      z-index: 5;
+      transition: all 0.15s ease;
+    }
+    .search-result-add-badge:hover, .search-result-add-badge:active {
+      background: var(--gold);
+      color: #000;
+    }
+
+    /* Выпадающий список выбора категории из плюса */
+    .search-cat-picker-menu {
+      position: absolute;
+      bottom: 40px;
+      right: 6px;
+      background: #0d0f16;
+      border: 1px solid var(--gold);
+      border-radius: 10px;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      z-index: 20;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      min-width: 110px;
+      animation: menuPop 0.15s ease-out;
+    }
+    @keyframes menuPop {
+      from { opacity: 0; transform: scale(0.9) translateY(6px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .search-cat-picker-btn {
+      background: transparent;
+      border: none;
+      color: #e2e8f0;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: left;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.12s ease;
+    }
+    .search-cat-picker-btn:hover, .search-cat-picker-btn:active {
+      background: rgba(251, 191, 36, 0.2);
+      color: var(--gold);
     }
     .search-empty-state {
       grid-column: 1 / -1;
@@ -2025,39 +2072,60 @@
       grid.innerHTML = '<div class="search-empty-state"><span>Ищем изображения...</span></div>';
 
       try {
-        let englishQuery = query;
-        // Если запрос на русском, автоматически переводим через бесплатный Google Translate API для максимального охвата
+        // Формируем список запросов и эндпоинтов для надежного параллельного поиска
+        const endpoints = [];
+
+        // 1. Прямой поиск в русской Википедии/Викискладе (отлично работает для запросов на русском)
+        endpoints.push(`https://ru.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
+
+        // 2. Поиск в глобальном Wikimedia Commons по оригинальному запросу
+        endpoints.push(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
+
+        // 3. Если в запросе есть кириллица, пробуем перевести на английский (без падения при сбое сети)
         if (/[а-яё]/i.test(query)) {
           try {
             const trRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(query)}`);
-            const trData = await trRes.json();
-            if (trData && trData[0] && trData[0][0] && trData[0][0][0]) {
-              englishQuery = trData[0][0][0];
+            if (trRes.ok) {
+              const trData = await trRes.json();
+              if (trData && trData[0] && trData[0][0] && trData[0][0][0]) {
+                const enWord = trData[0][0][0];
+                endpoints.push(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(enWord)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
+                endpoints.push(`https://en.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(enWord)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`);
+              }
             }
-          } catch(e) {
-            console.log('Translate error, using raw query:', e);
+          } catch (trErr) {
+            console.log('Optional translation skipped:', trErr);
           }
         }
 
-        // Запрос к проверенной базе Wikimedia Commons (CORS origin=* гарантирован) с фильтром по качественным растровым артам и фото
-        const searchQuery = 'filetype:bitmap ' + englishQuery;
-        const apiUrl = `https://en.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(searchQuery)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&format=json`;
+        // Запускаем запросы безопасно через allSettled
+        const results = await Promise.allSettled(
+          endpoints.map(u => fetch(u).then(r => r.json()))
+        );
 
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        let pages = (data.query && data.query.pages) ? Object.values(data.query.pages) : [];
-
-        // Фильтруем только полноценные растровые картинки (jpg, png, webp)
+        const seenUrls = new Set();
         const validImages = [];
-        for (const p of pages) {
-          if (p.imageinfo && p.imageinfo[0]) {
-            const info = p.imageinfo[0];
-            const mime = (info.mime || '').toLowerCase();
-            const title = (p.title || '').toLowerCase();
-            if (mime.includes('image') && !mime.includes('svg') && !title.endsWith('.pdf')) {
-              const thumbUrl = info.thumburl || info.url;
-              const fullUrl = info.url || thumbUrl;
-              validImages.push({ thumb: thumbUrl, full: fullUrl, title: p.title });
+
+        for (const res of results) {
+          if (res.status === 'fulfilled' && res.value && res.value.query && res.value.query.pages) {
+            const pages = Object.values(res.value.query.pages);
+            for (const p of pages) {
+              if (p.imageinfo && p.imageinfo[0]) {
+                const info = p.imageinfo[0];
+                const mime = (info.mime || '').toLowerCase();
+                const title = (p.title || '').toLowerCase();
+                if (mime.includes('image') && !mime.includes('svg') && !title.endsWith('.pdf')) {
+                  const thumb = (info.thumburl || info.url || '').replace('^//', 'https://');
+                  const full = (info.url || thumb).replace('^//', 'https://');
+                  const safeThumb = thumb.startsWith('//') ? 'https:' + thumb : thumb;
+                  const safeFull = full.startsWith('//') ? 'https:' + full : full;
+
+                  if (safeThumb && !seenUrls.has(safeFull)) {
+                    seenUrls.add(safeFull);
+                    validImages.push({ thumb: safeThumb, full: safeFull, title: p.title || 'референс' });
+                  }
+                }
+              }
             }
           }
         }
@@ -2071,14 +2139,77 @@
         validImages.forEach(imgData => {
           const item = document.createElement('div');
           item.className = 'search-result-item';
-          item.title = 'Нажмите, чтобы добавить в «' + CATEGORIES[activeTabId].title + '»';
-          item.innerHTML = `
-            <img src="${imgData.thumb}" alt="референс" loading="lazy" />
-            <div class="search-result-add-badge">+</div>
-          `;
+
+          // Картинка референса
+          const imgEl = document.createElement('img');
+          imgEl.src = imgData.thumb;
+          imgEl.alt = 'референс';
+          imgEl.loading = 'lazy';
+          item.appendChild(imgEl);
+
+          // Кнопка "+"
+          const addBtn = document.createElement('div');
+          addBtn.className = 'search-result-add-badge';
+          addBtn.innerHTML = '+';
+          addBtn.title = 'Выбрать категорию для добавления';
+
+          // Выпадающее меню категорий
+          const catMenu = document.createElement('div');
+          catMenu.className = 'search-cat-picker-menu';
+          catMenu.style.display = 'none';
+
+          // 5 категорий приложения
+          const cats = [
+            { id: 'emotion', label: 'эмоция' },
+            { id: 'creatures', label: 'образы' },
+            { id: 'people', label: 'объект' },
+            { id: 'items', label: 'предмет' },
+            { id: 'spaces', label: 'детали' }
+          ];
+
+          cats.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = 'search-cat-picker-btn';
+            btn.type = 'button';
+            btn.textContent = c.label;
+            btn.onclick = async (e) => {
+              e.stopPropagation();
+              catMenu.style.display = 'none';
+              try {
+                showToast(`Сохраняем в «${c.label}»...`);
+                const opt = await optimizeImageUrl(imgData.full);
+                await addItemToDB(c.id, opt);
+                await renderTabs();
+                await renderAlbumGrid();
+                showToast(`Добавлено в «${c.label}»!`);
+              } catch (saveErr) {
+                console.error(saveErr);
+                showToast('Не удалось загрузить это изображение');
+              }
+            };
+            catMenu.appendChild(btn);
+          });
+
+          // Клик по плюсу открывает/закрывает список категорий
+          addBtn.onclick = (e) => {
+            e.stopPropagation();
+            const isOpen = catMenu.style.display === 'flex';
+            // Закрываем все другие открытые меню в поиске
+            document.querySelectorAll('.search-cat-picker-menu').forEach(m => m.style.display = 'none');
+            if (!isOpen) {
+              catMenu.style.display = 'flex';
+            }
+          };
+
+          // Клик по самой карточке сохраняет в текущую активную вкладку
           item.onclick = async () => {
+            // Если меню открыто, просто закрываем его
+            if (catMenu.style.display === 'flex') {
+              catMenu.style.display = 'none';
+              return;
+            }
             try {
-              showToast('Сохраняем в альбом...');
+              showToast(`Сохраняем в «${CATEGORIES[activeTabId].title}»...`);
               const opt = await optimizeImageUrl(imgData.full);
               await addItemToDB(activeTabId, opt);
               await renderTabs();
@@ -2089,6 +2220,9 @@
               showToast('Не удалось загрузить это изображение');
             }
           };
+
+          item.appendChild(addBtn);
+          item.appendChild(catMenu);
           grid.appendChild(item);
         });
 

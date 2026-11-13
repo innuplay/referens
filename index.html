@@ -758,6 +758,7 @@
       }
     }
   </style>
+  <script src="initial_data.js"></script>
 </head>
 <body>
 
@@ -1331,6 +1332,25 @@
 
     async function init() {
       await initDB();
+
+      // Автоматическая загрузка картинок из GitHub при первом запуске сайта
+      if (window.PRELOADED_DATA && window.PRELOADED_DATA.items) {
+        const hasLoadedKey = 'referens_preloaded_v1';
+        if (!localStorage.getItem(hasLoadedKey)) {
+          const tx = db.transaction(STORE_ITEMS, 'readwrite');
+          const store = tx.objectStore(STORE_ITEMS);
+          for (const item of window.PRELOADED_DATA.items) {
+            store.put(item);
+          }
+          await new Promise((res) => { tx.oncomplete = res; });
+          if (Array.isArray(window.PRELOADED_DATA.boardItemIds)) {
+            boardItemIds = window.PRELOADED_DATA.boardItemIds;
+            saveBoardToStorage();
+          }
+          localStorage.setItem(hasLoadedKey, 'true');
+        }
+      }
+
       await renderTabs();
       await renderAlbumGrid();
       await renderBoard();

@@ -319,24 +319,24 @@
       position: absolute;
       top: 8px;
       left: 8px;
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.7);
-      border: 1.5px solid rgba(255, 255, 255, 0.5);
+      background: rgba(0, 0, 0, 0.75);
+      border: 1.5px solid rgba(255, 255, 255, 0.55);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
-      z-index: 5;
+      transition: all 0.15s ease;
+      z-index: 10;
       backdrop-filter: blur(4px);
       cursor: pointer;
+      pointer-events: auto;
+      touch-action: manipulation;
     }
-    .photo-pin-badge:hover {
-      transform: scale(1.1);
-      border-color: var(--gold);
-      color: var(--gold);
+    .photo-pin-badge:active {
+      transform: scale(0.92);
     }
     .photo-card.on-board .photo-pin-badge {
       background: var(--gold);
@@ -355,6 +355,7 @@
       flex-direction: column;
       justify-content: space-between;
       padding: 6px;
+      pointer-events: none; /* чтобы клики сквозь оверлей шли на карточку */
     }
     .photo-card:hover .photo-overlay {
       opacity: 1;
@@ -363,6 +364,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 6px;
+      pointer-events: auto;
     }
     .action-btn-mini {
       background: rgba(0, 0, 0, 0.7);
@@ -891,8 +893,7 @@
         opacity: 0.85;
       }
       .album-item-overlay {
-        opacity: 1; /* элементы управления на тачскрине доступны */
-        background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 40%, rgba(0,0,0,0.7) 100%);
+        display: none;
       }
       .fullscreen-board-modal {
         padding: 12px;
